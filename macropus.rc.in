@@ -1,0 +1,49 @@
+#include <windows.h>
+
+//#define IDI_      107
+//#define IDI_SMALL 108
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+
+107       ICON         "@CMAKE_CURRENT_SOURCE_DIR@/icons/Macropus.ico"
+//108       ICON         "small.ico"
+
+VS_VERSION_INFO VERSIONINFO
+	FILEVERSION @MCR_VER_MAJ@,@MCR_VER_MIN@,@GIT_REVISION@,0
+	PRODUCTVERSION @MCR_VER_MAJ@,@MCR_VER_MIN@,@GIT_REVISION@,0
+	FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+#ifdef MCR_DEBUG
+	FILEFLAGS VS_FF_DEBUG|VS_FF_PRERELEASE
+#else
+	FILEFLAGS VS_FF_PRERELEASE
+#endif
+	FILEOS VOS__WINDOWS32
+	FILETYPE VFT_APP
+	FILESUBTYPE VFT2_UNKNOWN
+	BEGIN
+		BLOCK "StringFileInfo"
+		BEGIN
+			BLOCK "040904b0"
+			BEGIN
+				VALUE "CompanyName", "New Paradigm Software\0"
+				VALUE "FileDescription", "Macropus, a Libmacro hotkey application.\0"
+				VALUE "FileVersion", "@MCR_VER_MAJ@.@MCR_VER_MIN@.@GIT_REVISION@.0\0"
+				VALUE "LegalCopyright", "Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software\0"
+				VALUE "OriginalFilename", "Macropus.exe\0"
+				VALUE "ProductName", "Macropus\0"
+				VALUE "ProductVersion", "@MCR_VER_MAJ@.@MCR_VER_MIN@.@GIT_REVISION@.0\0"
+			END
+		END
+		BLOCK "VarFileInfo"
+		BEGIN
+			VALUE "Translation", 0x0409, 1200
+		END
+	END
+/* End of Version info */
+

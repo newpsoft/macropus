@@ -1,0 +1,8 @@
+Primary
+f6310a
+
+Accent
+ffb1a1
+
+Outline
+ff3810

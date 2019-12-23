@@ -1,0 +1,6 @@
+singleton WindowSettings 0.1 WindowSettings.qml
+singleton Files 0.1 Files.qml
+singleton Style 0.1 Style.qml
+singleton LibmacroSettings 0.1 LibmacroSettings.qml
+singleton SignalPages 0.1 SignalPages.qml
+singleton TriggerPages 0.1 TriggerPages.qml

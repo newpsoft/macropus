@@ -1,0 +1,3 @@
+module newpsoft.macropus
+plugin MacropusPlugin
+classname MacropusPlugin

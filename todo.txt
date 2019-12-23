@@ -1,0 +1,72 @@
+Headless mode loads only one file, may prompt for password.
+
+Offer option to exit when load file fails?
+Array-based modes? Needs in-memory macro mode list to be reference to mode object. Saved file mode list is still a list of strings.
+  look at: MacroList, Layout, MacroSettings, MainWindow, ModeList, ModeTabs, RunMacros, SelectorWindow, LibmacroSettings?
+  checked: EditMacros, Globals
+Data model for macro list?
+Make recorder context-sensitive.  Any list recorder should not interfere with user actions.  May be purposeful user actions.  Main window should not accept input while recording.
+Flag-enumerations in-memory as integer, save as array of named enumeration
+  settings option to save as integer or array of names
+If applyMacrosInMode and remove macro from list, remove macro from applied.
+EditStack in Globals and push is wonky. Maybe do a signal to push with component and container parameters.
+showbackbutton and window title depends on visiblePage variable. No current solution.
+Style settings: Add load from file, remove text edit boxes, and add color selector.
+Change macro recorder options to floating button or something that can be accessed with editing or running macros.
+
+launch option: Add option for external main qml file to load (with the benefits of our libraries).
+
+WorkerScript and loading circle when applying macros, load/save file
+
+Macro algorithm:
+ Fix concurrency and reduce usage of mutices.
+
+macro list view:
+ ScrollView for Mode tabs.
+
+Hotkey window - a hotkey will be an Action trigger and Key activator
+ Use case: simplification.  Restrict to one set of modifiers and only key presses.
+ 1) Wait for key up.  After 3 seconds assume "no modifiers" (instead have button or option for no modifiers).
+ 2) On key up record Action of all current modifiers.
+ 3) Wait for a key down or up.
+ 4) Keep listening for key presses until pause.
+ 5) After pause, record activators.
+   5.a) One key only, max of one down and one up, record only key down as the activator.
+   5.b) Multiple keys, convert Action to Staged with set of keys.  All stages have the same modifiers.
+
+Alarm
+ sec, min, hour, and weekdays flag
+ Empty weekdays means every day.
+ Turn Alarm into a trigger.
+
+Key
+ QTrigger window, separate buttons to listen for key up or key down
+
+Globals
+ get modes list including "All"
+ add function to reset edit stack
+
+Layout
+ filter by mode
+ visually link macros to all modes they are in
+ click macro to edit macro
+ click mode to edit macro list, filter by mode name
+
+Settings
+ add autosave option(default true)
+ add toggle saving macro file with names or integer/enums. Default to names.
+ add "killswitch" hotkey
+ add enable mode switch hotkeys.
+ add mode switch hotkeys.  Modifier set + 0-9
+ add macro recorder option to include time intervals (default true)
+ add hotkey to open and raise main window
+
+Macro recorder
+ Add time intervals
+ Setting for recorded time interval, constant time interval, or no recorded intervals.
+
+Libmacro
+ Move name => integer maps from C to C++ std::map
+ Reduce (void *) function arguments, non-typed arguments cause problems.
+ Optional message loop with condition variable to replace threading.
+ Common header for "__cplusplus is required" error.

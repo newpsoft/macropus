@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -19,20 +19,16 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
-import QtQuick.Window 2.1
+import QtQuick.Window 2.2
 import Qt.labs.settings 1.0
 import "../settings"
-import "../functions.js" as Functions
+import "../views"
 import "../model.js" as Model
 import newpsoft.macropus 0.1
 
-Window {
+WindowForm {
 	id: control
-	x: geometry.x
-	y: geometry.y
-	width: geometry.width
-	height: geometry.height
-	visible: false
+	title: qsTr("InterruptSelector")
 	color: Material.background
 
 	property int currentModeIndex
@@ -79,7 +75,7 @@ Window {
 							}
 							MouseArea {
 								anchors.fill: parent
-								hoverEnabled: WindowSettings.toolTips
+								hoverEnabled: WindowSettings.enableToolTips
 								onEntered: {
 									bg.color = Material.foreground
 									parent.color = Material.background
@@ -125,11 +121,5 @@ Window {
 	function reject() {
 		rejected()
 		close()
-	}
-
-	Geometry {
-		id: geometry
-		category: "Window.InterruptSelector"
-		window: control
 	}
 }

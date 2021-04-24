@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ import "../settings"
 
 Item {
 	id: view
-	implicitHeight: childrenRect.height
 
 	signal dropHere(var drop)
 	signal dropAfter(var drop)
@@ -50,6 +49,8 @@ Item {
 			anchors.top: parent.top
 			anchors.left: parent.left
 			anchors.right: parent.right
+			anchors.topMargin: view.tileModeFlag ? 0 : -Style.spacing
+			anchors.leftMargin: view.tileModeFlag ? -Style.spacing : 0
 			height: Style.spacing
 			color: Material.accent
 			radius: Style.tabRadius
@@ -68,6 +69,8 @@ Item {
 			anchors.left: parent.left
 			anchors.right: parent.right
 			anchors.bottom: parent.bottom
+			anchors.bottomMargin: view.tileModeFlag ? 0 : -Style.spacing
+			anchors.rightMargin: view.tileModeFlag ? -Style.spacing : 0
 			height: Style.spacing
 			color: Material.accent
 			radius: Style.tabRadius

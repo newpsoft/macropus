@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@ import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
 import "../settings"
-import "../functions.js" as Functions
 
 // Model properties: action(required), iconName, iconSource, text
 Repeater {
@@ -31,7 +30,7 @@ Repeater {
 			value: btnWidth ? btnWidth : undefined
 		}
 		height: btnWidth ? btnWidth : Style.buttonWidth
-		hoverEnabled: WindowSettings.toolTips
+		hoverEnabled: WindowSettings.enableToolTips
 		display: AbstractButton.TextUnderIcon
 		icon.name: model.iconName ? model.iconName : ""
 		icon.source: model.iconSource ? model.iconSource : ""

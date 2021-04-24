@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@ import QtQuick.Controls 2.3
 import "../../settings"
 import ".."
 import "../../views"
-import "../../functions.js" as Functions
 import "../../model.js" as Model
 import newpsoft.macropus 0.1
 
@@ -33,10 +32,10 @@ Column {
 		objectName: "current"
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: qsTr("Current")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Set modifiers from current value.")
 		onClicked: checkboxes.set(QLibmacro.modifiers())
-		ButtonStyle {
-		}
+		ButtonStyle {}
 	}
 
 	ComboBox {
@@ -44,17 +43,17 @@ Column {
 		objectName: "applyType"
 		anchors.left: parent.left
 		anchors.right: parent.right
-		model: Model.applyTypes()
+		model: Vars.applyTypeLabels
 		Binding on currentIndex {
 			value: control.model && control.model.applyType
 		}
-		onCurrentIndexChanged: {
+		onActivated: {
 			if (control.model)
-				control.model.applyType = currentIndex
+				control.model.applyType = index
 		}
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Up type, set or release")
-		ComboBoxStyle {
-		}
+		ComboBoxStyle {}
 	}
 
 	GroupBox {

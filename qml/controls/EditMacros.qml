@@ -15,107 +15,240 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
 import QtQuick 2.10
 import QtQuick.Controls 2.3
+import QtQuick.Controls.Material 2.3
+import Qt.labs.settings 1.0
+import QtGraphicalEffects 1.0
 import "../settings"
+import "../views"
+import "../extension.js" as Extension
+import "../functions.js" as Functions
+import "../list_util.js" as ListUtil
 import "../model.js" as Model
-import "../vars.js" as Vars
 import newpsoft.macropus 0.1
 
 Page {
 	id: control
 	title: qsTr("Edit macros")
+	background: null
 
-	property int currentModeIndex
-	property QtObject macroModel
-	property QtObject modeModel
+	property alias modeBar: modeBar
+	property alias currentModeIndex: modeBar.currentModeIndex
+	property bool isAllModeCurrent: currentModeIndex === -1
+	property alias modeModel: modeBar.model
 
-	signal reapplyMode()
+	property alias toolBar: toolBar
+	property alias chkApplyMacros: toolBar.chkApplyMacros
+	property alias chkApplyMacrosChecked: toolBar.chkApplyMacrosChecked
+	property alias chkSelectAll: toolBar.chkSelectAll
+	property alias chkSelectAllChecked: toolBar.chkSelectAllChecked
 
-	header: Flickable {
-		id: headerFlickable
+	property alias copyContainer: dropList.copyContainer
+	property alias cloneElement: dropList.cloneElement
+	property alias macroModel: dropList.model
+	property alias selectAll: dropList.selectAll
+	Binding on selectAll {
+		value: chkSelectAllChecked
+	}
+	Binding on chkSelectAllChecked {
+		value: selectAll
+	}
+
+	/* Public list action interface */
+	property var addAction: dropList.addAction
+	property var removeAction: dropList.removeAction
+	property var cutAction: dropList.cutAction
+	property var copyAction: dropList.copyAction
+	property var pasteAction: dropList.pasteAction
+	property var selectAllAction: dropList.selectAllAction
+
+	signal reapplyMode
+
+	signal findImage(var macro)
+	signal editActivators(var macro)
+	signal editTriggers(var macro)
+	signal editSignals(var macro)
+	signal recordHotkey(var macro)
+
+	header: ExpandableHeader {
+		id: expandableHeader
 		anchors.left: parent.left
 		anchors.right: parent.right
-		height: tabBar.height
-		contentWidth: tabBar.width
-		contentHeight: tabBar.height
 
-		ModeTabs {
-			id: tabBar
-			Binding on currentModeIndex {
-				value: control.currentModeIndex
-			}
-			onCurrentModeIndexChanged: control.currentModeIndex = currentModeIndex
-			states: State {
-				when: width < headerFlickable.width
-				PropertyChanges {
-					target: headerFlickable
-					contentWidth: headerFlickable.width
+		Binding on expanded {
+			value: WindowSettings.expandHeader
+		}
+		onExpandedChanged: WindowSettings.expandHeader = expanded
+
+		/* Under-clip to not see ListView below mode tabs. */
+		Rectangle {
+			anchors.fill: headerContent
+			clip: true
+			color: Material.background
+			visible: Style.opacity === 1.0
+		}
+
+		Column {
+			id: headerContent
+			anchors.left: parent.left
+			anchors.right: parent.right
+			anchors.rightMargin: Style.buttonWidth
+			ModeTabs {
+				id: modeBar
+				anchors.left: parent.left
+				anchors.right: parent.right
+				onDropToAll: dropToFlag(drop, -1)
+				onDropTo: dropToFlag(drop, Functions.indexFlag(index))
+				onReapply: control.reapplyMode()
+
+				function dropToFlag(drop, modeFlag) {
+					if (drop && drop.keys.includes("application/macro")) {
+						/* TODO: EditMacros page assumes drop macros come from macroModel */
+						ListUtil.selection(macroModel, dropList.dropList.itemAt)
+						.forEach(element => element.modes = modeFlag)
+					}
 				}
-				AnchorChanges {
-					target: tabBar
-					anchors.horizontalCenter: tabBar.parent.horizontalCenter
-				}
 			}
-			onReapply: control.reapplyMode()
+			EditMacrosActionBar {
+				id: toolBar
+				anchors.left: parent.left
+				anchors.right: parent.right
+
+				onAdd: addAction()
+				onRemove: removeAction()
+				onCut: cutAction()
+				onCopy: copyAction()
+				onPaste: pasteAction()
+			}
 		}
 	}
-	MacroList {
+	ScrollView {
 		anchors.fill: parent
+		anchors.topMargin: Style.spacing
+		contentWidth: width
+		contentHeight: dropList.height
+
+		DropListColumn {
+			id: dropList
+			anchors.left: parent.left
+			anchors.right: parent.right
+//			WidthConstraint { target: dropList }
+
+			dragKeys: ["application/macro"]
+			cloneElement: new Model.Macro()
+
+			contentComponent: MacroForm {
+				property Item greaterParent: Functions.ancestor(parent, "itemRoot")
+				property bool isToShow: model && (control.isAllModeCurrent
+												  || Functions.isFlagIndex(
+													  model.modes,
+													  control.currentModeIndex))
+
+				anchors.left: parent.left
+				anchors.right: parent.right
+				onEditActivators: control.editActivators(model)
+				onEditTriggers: control.editTriggers(model)
+				onEditSignals: control.editSignals(model)
+				onRecordHotkey: control.recordHotkey(model)
+
+				Binding {
+					target: greaterParent
+					property: "visible"
+					value: isToShow
+				}
+
+				Binding on image {
+					value: model && model.image
+				}
+				onFindImage: control.findImage(model)
+
+				Binding on name {
+					value: model && model.name
+				}
+				onNameChanged: {
+					if (model)
+						model.name = name
+				}
+				Binding on macroEnabled {
+					value: model && model.enabled
+				}
+				onMacroEnabledChanged: {
+					if (model)
+						model.enabled = macroEnabled
+				}
+				Binding on blocking {
+					value: model && model.blocking
+				}
+				onBlockingChanged: {
+					if (model)
+						model.blocking = blocking
+				}
+				Binding on sticky {
+					value: model && model.sticky
+				}
+				onStickyChanged: {
+					if (model)
+						model.sticky = sticky
+				}
+				Binding on threadMax {
+					value: model && model.threadMax
+				}
+				onThreadMaxChanged: {
+					if (model)
+						model.threadMax = threadMax
+				}
+			}
+		}
+
+		Label {
+			id: lblCurMods
+			anchors.top: dropList.top
+			anchors.right: dropList.right
+			width: Style.tileWidth
+			wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+			horizontalAlignment: Qt.AlignHCenter
+			text: makeText()
+			Timer {
+				running: true
+				repeat: true
+				interval: Vars.longSecond
+				onTriggered: lblCurMods.text = lblCurMods.makeText()
+			}
+			function makeText() {
+				var modifiers = QLibmacro.modifiers()
+				var arr = Functions.expandFlagNames(
+							modifiers, SignalFunctions.modifierNames())
+				return qsTr("Current modifiers:") + "\n" +
+					(arr && arr.length ? arr.join(", ") : "None")
+			}
+		}
+	}
+
+	ToolTip {
+		id: expandableTutorial
+		x: dropList.width
+		width: someContent.width + Style.spacing * 2
+		height: someContent.height + Style.spacing * 2
+		delay: Vars.shortSecond
+		visible: !settings.tutorialAccepted
+
+		MouseArea {
+			anchors.fill: parent
+			onClicked: {
+				settings.tutorialAccepted = true
+				expandableTutorial.close()
+			}
+		}
+
+		ExpandableTutorialForm {
+			id: someContent
+			anchors.centerIn: parent
+        }
+		Settings {
+			id: settings
+			category: "expand"
+			property bool tutorialAccepted: false
+		}
 	}
 }
-
-//ActionList {
-//	id: control
-//	property string title: qsTr("Edit macros")
-
-//	onClone: Globals.macros = copytron
-//	fnObject: function () { return new Model.Macro(); }
-//	objectTemplate: new Model.Macro()
-//	delegate: Flow {
-//		width: parent.width - Style.spacing * 2
-//		height: implicitHeight
-//		spacing: Style.spacing
-//		TextField {
-//			width: parent.width
-//			Keys.onPressed: control.jsonModel.handleKeys(event)
-//			selectByMouse: true
-//			font: Util.fixedFont
-//			placeholderText: qsTr("Name")
-//			onTextChanged: control.jsonModel.setProperty(index, "name", text)
-//			Binding on text {
-//				value: model && model.name
-//			}
-//		}
-//		RoundButton {
-//			text: qsTr("Activators")
-//			onClicked: Globals.editActivators(Globals.categories[index])
-//			ToolTip.text: qsTr("Edit activators of this category")
-//		}
-//		RoundButton {
-//			text: qsTr("Triggers")
-//			onClicked: Globals.editTriggers(Globals.categories[index])
-//			ToolTip.text: qsTr("Edit triggers of this category")
-//		}
-//		RoundButton {
-//			text: qsTr("Macros")
-//			onClicked: Globals.editMacros(Globals.categories[index])
-//			ToolTip.text: qsTr("Edit macros of this category")
-//		}
-//		RoundButton {
-//			text: qsTr("Hotkey")
-//			onClicked: {
-
-//			}
-//			ToolTip.text: qsTr("Record a hotkey")
-//			enabled: false
-//		}
-//	}
-
-//	Binding {
-//		target: control
-//		property: "object"
-//		value: Globals.categories
-//	}
-//}

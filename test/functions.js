@@ -1,4 +1,5 @@
 .pragma library
+.import "../qml/extension.js" as Extension
 
 function requireModel(model, propertyName) {
 	if (!model)
@@ -62,41 +63,51 @@ function fiddleTextModel(editText, model, propertyName, compare) {
 }
 
 function fiddleCombo(comboBox, itemModel, model, propertyName, compare) {
-	var expectModel = function () {
-		if (model && propertyName)
-			compare(model[propertyName], comboBox.currentIndex)
+	var expectModel = () => {
+		if (model && propertyName) {
+			var element = comboBox.model[comboBox.currentIndex]
+			if (!element) {
+				return
+			} else if (Extension.isObjectExplicit(element)) {
+				compare(model[propertyName], element[propertyName])
+			} else {
+				compare(model[propertyName], comboBox.currentIndex)
+			}
+		}
+	}
+	var activateMe = index => {
+		comboBox.currentIndex = index
+		comboBox.activated(comboBox.currentIndex)
 	}
 
 	/* Model may not have property yet, and currentIndexChanged SHOULD set
 	 * the property in the model. */
 	comboBox.currentIndexChanged()
+	comboBox.activated(comboBox.currentIndex)
 
 	// All valid
 	for (var i in itemModel) {
 		i = Number(i)
-		comboBox.currentIndex = i
+		activateMe(i)
 		compare(comboBox.currentIndex, i)
-		compare(comboBox.currentText, itemModel[i])
 		expectModel()
 	}
 
 	// Edge case
-	comboBox.currentIndex = itemModel.length
-	compare(comboBox.currentIndex, itemModel.length)
+	activateMe(itemModel.length)
 	expectModel()
 
 	// Definitely invalid
-	comboBox.currentIndex = 0xFF
-	compare(comboBox.currentIndex, 0xFF)
+	activateMe(0xFF)
 	expectModel()
 
 	// -1 sets empty text
-	comboBox.currentIndex = -1
+	activateMe(-1)
 	compare(comboBox.currentIndex, -1)
-	compare(comboBox.currentText, "")
 	expectModel()
 }
 
+// TODO Invalid when combo model is not list of strings
 function fiddleComboModel(comboBox, itemModel, model, propertyName, compare) {
 	requireModel(model, propertyName)
 

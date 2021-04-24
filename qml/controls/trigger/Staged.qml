@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ import QtQuick.Controls 2.3
 import "../../settings"
 import "../../views"
 import "../../extension.js" as Extension
-import "../../functions.js" as Functions
 import "../../model.js" as Model
 
 Column {
@@ -36,14 +35,15 @@ Column {
 		objectName: "blockStyle"
 		anchors.left: parent.left
 		anchors.right: parent.right
-		model: Model.blockingStyles()
+		model: Vars.blockingStyleLabels
 		Binding on currentIndex {
 			value: control.model && control.model.blockStyle
 		}
-		onCurrentIndexChanged: {
+		onActivated: {
 			if (control.model)
-				control.model.blockStyle = currentIndex
+				control.model.blockStyle = index
 		}
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Blocking style, how blocking applies to stages")
 		ComboBoxStyle {}
 	}

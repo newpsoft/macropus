@@ -41,11 +41,11 @@ ApplicationWindow {
 			CheckBox {
 				text: qsTr("Enable intercept")
 				Binding on checked {
-					value: LibmacroSettings.interceptEnabled
+					value: LibmacroSettings.enableInterceptFlag
 				}
 				onCheckedChanged: {
 					if (enabled)
-						LibmacroSettings.interceptEnabled = checked
+						LibmacroSettings.enableInterceptFlag = checked
 				}
 			}
 		}
@@ -60,9 +60,7 @@ ApplicationWindow {
 				id: loader
 				anchors.horizontalCenter: parent.horizontalCenter
 				width: Math.min(parent.width, Style.pageWidth)
-				onLoaded: item.width = Qt.binding(function () {
-					return loader.width
-				})
+				onLoaded: item.width = Qt.binding(() => loader.width)
 			}
 		}
 		DropArea {

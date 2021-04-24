@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -36,7 +36,6 @@ Column {
 		anchors.left: parent.left
 		anchors.right: parent.right
 		placeholderText: qsTr("File")
-		font: Util.fixedFont
 		onTextChanged: {
 			if (model)
 				model.file = text
@@ -52,17 +51,17 @@ Column {
 			objectName: "find"
 			text: qsTr("Find")
 			onClicked: fileDialog.open()
+			ToolTip.delay: Vars.shortSecond
 			ToolTip.text: qsTr("Set command to a file name")
-			ButtonStyle {
-			}
+			ButtonStyle {}
 		}
 		RoundButton {
 			objectName: "args"
 			text: qsTr("Args")
 			onClicked: control.editArgs()
+			ToolTip.delay: Vars.shortSecond
 			ToolTip.text: qsTr("Edit command arguments")
-			ButtonStyle {
-			}
+			ButtonStyle {}
 		}
 	}
 	FileDialog {

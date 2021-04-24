@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
 */
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Window 2.0
+import QtQuick.Window 2.2
 import "../../settings"
 import ".."
 import "../../views"
@@ -34,17 +34,17 @@ Column {
 		objectName: "type"
 		anchors.left: parent.left
 		anchors.right: parent.right
-		model: Model.interruptTypes()
+		model: Vars.interruptTypes
 		Binding on currentIndex {
 			value: control.model && control.model.type
 		}
-		onCurrentIndexChanged: {
+		onActivated: {
 			if (control.model)
-				control.model.type = currentIndex
+				control.model.type = index
 		}
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Type of interrupt")
-		ComboBoxStyle {
-		}
+		ComboBoxStyle {}
 	}
 	TextField {
 		id: editTarget
@@ -52,7 +52,6 @@ Column {
 		anchors.left: parent.left
 		anchors.right: parent.right
 		placeholderText: qsTr("Target name")
-		font: Util.fixedFont
 		Binding on text {
 			value: model && model.target
 		}
@@ -65,18 +64,18 @@ Column {
 		objectName: "find"
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: qsTr("Find")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Find target name from current macros")
 		onClicked: selectorWindow.show()
-		ButtonStyle {
-		}
+		ButtonStyle {}
 	}
 	SelectorWindow {
 		id: selectorWindow
 		objectName: "selector"
 		modality: Qt.WindowModal
 		onAccepted: {
-			if (model)
-				model.target = target
+			if (control.model)
+				control.model.target = target
 		}
 	}
 }

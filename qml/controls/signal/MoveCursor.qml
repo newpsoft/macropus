@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ Column {
 		objectName: "recorder"
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: qsTr("Record")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Record a cursor movement.")
 		onClicked: recordWindow.show()
 		ButtonStyle {}
@@ -127,13 +128,13 @@ Column {
 			if (!isIsignalValid(intercept))
 				return
 			if (isMoveCursor(intercept.isignal)) {
-				Extension.copy(intercept, control.model)
+				Object.assign(control.model, intercept)
 				close()
 			} else if (isEcho(intercept.isignal)) {
 				var pos = QLibmacro.cursorPosition()
-				model.x = pos[MCR_X]
-				model.y = pos[MCR_Y]
-				model.z = pos[MCR_Z]
+				model.x = pos.x
+				model.y = pos.y
+				model.z = 0
 				model.justify = false
 				close()
 			}

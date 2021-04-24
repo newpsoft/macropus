@@ -21,10 +21,12 @@
 #include <cstring>
 
 #include "fileutil.h"
+#include "qclipboardproxy.h"
 #include "util.h"
 #include "qlibmacro.h"
 #include "qtrigger.h"
 
+#include <QClipboard>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlContext>
@@ -37,6 +39,13 @@
 using namespace mcr;
 
 static void addEnums(QQmlContext *qContext);
+
+QObject *qmlClipboardProvider(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+	Q_UNUSED(engine)
+	Q_UNUSED(scriptEngine)
+	return new QClipboardProxy(QGuiApplication::clipboard());
+}
 
 QObject *qmlFileUtilProvider(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
@@ -124,22 +133,25 @@ void applicationSetup()
 	/* Add branch name to non-master builds */
 #ifdef GIT_BRANCH
 	if (QString(MCR_STR(GIT_BRANCH)) != "master") {
-		app.setApplicationVersion(app.applicationVersion() + "-" + MCR_STR(GIT_BRANCH));
+		app.setApplicationVersion(app.applicationVersion() + "-" MCR_STR(GIT_BRANCH));
 	}
 #endif
 	app.setWindowIcon(QIcon(":/icons/Macropus.svg"));
 
 	QFont f = QGuiApplication::font();
-	f.setFamily(QSettings().value("Style/font", "Open Sans").toString());
+	f.setFamily(QSettings().value("Style/font", "Times New Roman").toString());
 	QGuiApplication::setFont(f);
 	QString appy(qApp->applicationDirPath());
 	QRegularExpression reg("^/");
 	appy = "file:///" + appy.replace(reg, "");
 	// TODO: storage paths
 	QIcon::setThemeSearchPaths(QIcon::themeSearchPaths() << appy);
+	QIcon::setThemeName(QSettings().value("Style/iconTheme",
+										  "BlueSphere").toString());
 }
 
-void initializeEngine(QQmlEngine *engine, const char *uri, QLibmacro *qlibmacroPt)
+void initializeEngine(QQmlEngine *engine, const char *uri,
+					  QLibmacro *qlibmacroPt)
 {
 	UNUSED(uri);
 	QQmlContext *qContext = engine->rootContext();
@@ -171,16 +183,25 @@ void initializeEngine(QQmlEngine *engine, const char *uri, QLibmacro *qlibmacroP
 
 static void addEnums(QQmlContext *qContext)
 {
+	qContext->setContextProperty("MCR_KEY_ANY",
+								 QVariant::fromValue<int>(MCR_KEY_ANY));
+	qContext->setContextProperty("MCR_HIDECHO_ANY",
+								 QVariant::fromValue<size_t>(MCR_HIDECHO_ANY));
+	qContext->setContextProperty("MCR_MOD_ANY",
+								 QVariant::fromValue<unsigned int>(MCR_MOD_ANY));
+
 	qContext->setContextProperty(MCR_STR(MCR_SET), MCR_SET);
 	qContext->setContextProperty(MCR_STR(MCR_UNSET), MCR_UNSET);
 	qContext->setContextProperty(MCR_STR(MCR_BOTH), MCR_BOTH);
 	qContext->setContextProperty(MCR_STR(MCR_TOGGLE), MCR_TOGGLE);
 
-	qContext->setContextProperty(MCR_STR(MCR_CONTINUE), MCR_CONTINUE);
-	qContext->setContextProperty(MCR_STR(MCR_PAUSE), MCR_PAUSE);
-	qContext->setContextProperty(MCR_STR(MCR_INTERRUPT), MCR_INTERRUPT);
-	qContext->setContextProperty(MCR_STR(MCR_INTERRUPT_ALL), MCR_INTERRUPT_ALL);
-	qContext->setContextProperty(MCR_STR(MCR_DISABLE), MCR_DISABLE);
+	// \todo Macro serial QObject with properties CONTINUE, PAUSE, etc. alias of Macro::CONTINUE etc.
+
+	qContext->setContextProperty(MCR_STR(MCR_CONTINUE), Macro::CONTINUE);
+	qContext->setContextProperty(MCR_STR(MCR_PAUSE), Macro::PAUSE);
+	qContext->setContextProperty(MCR_STR(MCR_INTERRUPT), Macro::INTERRUPT);
+	qContext->setContextProperty(MCR_STR(MCR_INTERRUPT_ALL), Macro::INTERRUPT_ALL);
+	qContext->setContextProperty(MCR_STR(MCR_DISABLE), Macro::DISABLE);
 
 	qContext->setContextProperty("MCR_X", QVariant::fromValue<int>(MCR_X));
 	qContext->setContextProperty("MCR_Y", QVariant::fromValue<int>(MCR_Y));

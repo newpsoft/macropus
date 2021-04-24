@@ -19,49 +19,68 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
-import QtQuick.Window 2.0
+import QtQuick.Window 2.2
 import "../settings"
+import "../views"
 import "../functions.js" as Functions
-import "../vars.js" as Vars
 
-Window {
+ApplicationWindow {
 	id: control
 	title: qsTr("Recording")
 	visible: false
 	color: Material.background
+	flags: Qt.Dialog
+	width: Style.tileWidth
+	height: width * Vars.lGolden
 
 	property alias interceptISignal: recorder.interceptISignal
 	property alias intercept: recorder.intercept
 	property alias enableIntercept: recorder.enableIntercept
 	property alias recorder: recorder
-	Recorder {
+	Trigger {
 		id: recorder
-		enableIntercept: visible && !interceptTimer.running
 	}
 
 	signal triggered(var intercept, var modifiers)
 
+	onVisibleChanged: {
+		if (!visible)
+			recorder.enableIntercept = false;
+	}
 	Component.onCompleted: recorder.triggered.connect(triggered)
 
-	Label {
-		id: txtStatus
-		anchors.centerIn: parent
-		text: interceptTimer.running ? qsTr("Record in 1 second...") : qsTr("Recording")
+	Frame {
+		anchors.fill: parent
+		FrameContent {
+			anchors.fill: parent
+			Label {
+				id: txtStatus
+				anchors.fill: parent
+				horizontalAlignment: Text.AlignHCenter
+				verticalAlignment: Text.AlignVCenter
+				text: interceptTimer.running ? qsTr("Record in 1 second...") : qsTr("Recording")
+				wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+			}
+		}
 	}
+
 	Timer {
 		id: interceptTimer
 		running: control.visible
 		interval: Vars.second
 		repeat: false
-		onTriggered: control.raise()
+		onTriggered: {
+			control.raise()
+			recorder.enableIntercept = true;
+		}
 	}
 	function isIsignalValid(dict) {
 		return dict && dict.isignal
 	}
 	function isEcho(string) {
-		return Functions.strequal(string, 'hid *echo') || Functions.strequal(string, 'echo')
+		return (/^hid *echo$/i.exec(string) || /^echo$/i.exec(string))
 	}
 	function isMoveCursor(string) {
-		return Functions.strequal(string, 'move *cursor') || Functions.strequal(string, 'mc')
+		return (/^move *cursor$/i.exec(string) || /^mc$/i.exec(string))
 	}
 }

@@ -19,17 +19,13 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
-import QtQuick.Window 2.0
+import QtQuick.Window 2.2
 import "../settings"
-import "../vars.js" as Vars
+import "../views"
 import newpsoft.macropus 0.1
 
-Window {
+ApplicationWindow {
 	id: view
-	x: geometry.x
-	y: geometry.y
-	width: geometry.width
-	height: geometry.height
 
 	property string text
 	signal accepted
@@ -38,28 +34,16 @@ Window {
 	onRejected: close()
 
 	flags: Qt.Tool
-	visible: false
-
-	Rectangle {
-		anchors.fill: parent
-		color: Material.background
-		border.color: Material.accent
-		border.width: 2
-	}
 
 	TextArea {
 		id: textArea
 		anchors {
-			top: if (parent)
-					 return parent.top
-			left: if (parent)
-					  return parent.left
-			right: if (parent)
-					   return parent.right
+			top: parent ? parent.top : undefined
+			left: parent ? parent.left : undefined
+			right: parent ? parent.right : undefined
 			bottom: btnOk.top
 			margins: Style.spacing
 		}
-		font: Util.fixedFont
 		wrapMode: Text.WrapAtWordBoundaryOrAnywhere
 		readOnly: true
 		Binding on text {
@@ -71,15 +55,15 @@ Window {
 		id: btnOk
 		z: 2
 		anchors {
-			right: if (parent)
-					   return parent.right
-			bottom: if (parent)
-						return parent.bottom
+			right: parent ? parent.right : undefined
+			bottom: parent ? parent.bottom : undefined
 			rightMargin: Style.buttonWidth
 			bottomMargin: Style.spacing
 		}
 		text: qsTr("Ok")
 		onClicked: accepted()
+
+		ButtonStyle {}
 	}
 
 	Timer {
@@ -101,5 +85,10 @@ Window {
 	function open() {
 		if (!visible)
 			show()
+	}
+	function message(text) {
+		/* text required */
+		view.text = text
+		open()
 	}
 }

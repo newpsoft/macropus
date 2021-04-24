@@ -20,6 +20,7 @@
 
 #include <QFile>
 #include "mcr/linux/p_libmacro.h"
+#include "mcr/extras/linux/p_extras.h"
 
 /*! Read from /proc/bus/input/devices
  *
@@ -40,7 +41,7 @@ static void deviceHandler(QMap<QChar, QString> &keyMap,
 						  QSet<QString> &eventSet);
 static void eventToInputFile(QStringList &eventList);
 /*! \pre interceptList must be existing files */
-static void setEvents(mcr_context *ctx, QStringList &interceptList);
+static void setEvents(mcr::Libmacro *ctx, QStringList &interceptList);
 static inline QString &removeAssignment(QString &line)
 {
 	/* Remove first spaces + letters + := + spaces */
@@ -75,19 +76,19 @@ QStringList QLibmacro::autoIntercepts()
 		lineHandler(line, keyMap, eventSet);
 	}
 	devFile.close();
-	ret = QStringList::fromSet(eventSet);
+	ret = QStringList(eventSet.begin(), eventSet.end());
 	eventToInputFile(ret);
 	return ret;
 }
 
 void QLibmacro::setInterceptFilter()
 {
-	setEvents(context()->ptr(), _interceptList);
+	setEvents(context(), _interceptList);
 }
 
 void QLibmacro::setInterceptEnabledImpl(bool bVal)
 {
-	mcr_intercept_set_enabled(context()->ptr(), bVal);
+	mcr_intercept_set_enabled(&**context(), bVal);
 }
 
 static void lineHandler(QString &line, QMap<QChar, QString> &keyMap,
@@ -113,8 +114,8 @@ static void deviceHandler(QMap<QChar, QString> &keyMap, QSet<QString> &eventSet)
 		return;
 	QString iLine = keyMap['I'];
 	QString hLine = keyMap['H'];
-	QStringList interfaceList = iLine.split(' ', QString::SkipEmptyParts);
-	QStringList hList = hLine.split(' ', QString::SkipEmptyParts);
+	QStringList interfaceList = iLine.split(' ', Qt::SkipEmptyParts);
+	QStringList hList = hLine.split(' ', Qt::SkipEmptyParts);
 	QSet<QString> localEventSet;
 	int i;
 	bool parseOk;
@@ -176,20 +177,16 @@ static void eventToInputFile(QStringList &eventList)
 	}
 }
 
-static void setEvents(mcr_context *ctx, QStringList &interceptList)
+static void setEvents(mcr::Libmacro *ctx, QStringList &interceptList)
 {
-	if (interceptList.isEmpty()) {
-		mcr_intercept_set_grabs(ctx, NULL, 0);
+	mcr::LibmacroPlatform *platform = ctx->platform();
+	platform->setGrabCount(0, true);
+	if (interceptList.isEmpty())
 		return;
-	}
-	QByteArray *arrs = new QByteArray[interceptList.length()];
-	const char **grabSet = new const char *[interceptList.length()];
+
+	platform->setGrabCount(interceptList.length(), false);
 	for (int i = 0; i < interceptList.length(); i++) {
-		arrs[i] = interceptList[i].toUtf8();
-		grabSet[i] = arrs[i].constData();
+		platform->setGrab(i, interceptList[i].toStdString(), false);
 	}
-	if (mcr_intercept_set_grabs(ctx, grabSet, (unsigned)interceptList.length()))
-		qCritical() << "Unable to set grab paths, intercept will not function";
-	delete []arrs;
-	delete []grabSet;
+	platform->updateGrabs();
 }

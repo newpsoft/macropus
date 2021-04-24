@@ -20,14 +20,15 @@
 
 #include "qlibmacro.h"
 
-QTrigger::QTrigger(QObject *parent): QObject(parent), _actionRef(), _blocking(false),
+QTrigger::QTrigger(QObject *parent): QObject(parent), _actionRef(),
+	_blocking(false),
 	_dispatchAdded(false),
 	_qlibmacroPt(nullptr)
 {
-	_trigger.setITrigger(context()->iAction());
-	_trigger.ptr()->actor = this;
-	_trigger.ptr()->trigger = &receiveTrigger;
-	_actionRef = _trigger;
+	_trigger.setITrigger(&context()->iAction);
+	_trigger.self.actor = this;
+	_trigger.self.trigger = &receiveTrigger;
+	_actionRef.build(&*_trigger);
 }
 
 QTrigger::~QTrigger()
@@ -43,9 +44,9 @@ void QTrigger::addDispatch()
 
 void QTrigger::addDispatch(const QString &isigName)
 {
-	mcr::ISignalRef isig;
+	mcr::ISignalBuilder isig;
 	removeDispatch();
-	isig = isigName.toUtf8().constData();
+	isig.build(isigName.toUtf8().constData());
 	if (isig.isignal()) {
 		_copy.setISignal(isig.isignal());
 		addDispatchImpl();
@@ -54,16 +55,16 @@ void QTrigger::addDispatch(const QString &isigName)
 
 void QTrigger::addDispatch(const QVariantMap &signalDict)
 {
-	mcr::ISignalRef isig;
+	mcr::ISignalBuilder isig;
 	removeDispatch();
 	if (_qlibmacroPt) {
-		isig = signalDict.value("isignal", "").toString().toUtf8().constData();
+		isig.build(signalDict.value("isignal", "").toString().toUtf8().constData());
 		if (isig.isignal()) {
 			mcr::SignalFunctions *sigs = qobject_cast<mcr::SignalFunctions *>
 										 (_qlibmacroPt->signalFunctions());
-			mcr::ISerializer *serPt = sigs->serializer(isig.id());
+			mcr::SerSignal *serPt = sigs->serializer(isig.id());
 			if (serPt) {
-				serPt->setObject(_copy.ptr());
+				serPt->setSignal(&*_copy);
 				serPt->setValues(signalDict);
 				addDispatchImpl();
 			}
@@ -73,10 +74,11 @@ void QTrigger::addDispatch(const QVariantMap &signalDict)
 
 void QTrigger::removeDispatch()
 {
-	mcr::SignalRef msig(context(), _copy.ptr());
+	mcr::SignalBuilder msig(context());
+	msig.build(&*_copy);
 	if (_dispatchAdded || msig.isignal()) {
-		mcr_Dispatcher_remove(context()->ptr(), msig.isignal(), this);
-		mcr_Dispatcher_remove(context()->ptr(), msig.isignal(), &_trigger);
+		mcr_dispatch_remove(&**context(), msig.isignal(), this);
+		mcr_dispatch_remove(&**context(), msig.isignal(), &*_trigger);
 		_copy.setISignal(nullptr);
 		_dispatchAdded = false;
 	}
@@ -90,7 +92,7 @@ QObject *QTrigger::qlibmacro() const
 void QTrigger::setQlibmacro(QObject *val)
 {
 	_qlibmacroPt = qobject_cast<QLibmacro *>(val);
-	_actionRef = mcr::TriggerRef(context(), _trigger.ptr());
+	_actionRef.build(&*_trigger);
 	emit qlibmacroChanged();
 }
 
@@ -125,19 +127,20 @@ mcr::Libmacro *QTrigger::context()
 	return mcr::Libmacro::instance();
 }
 
-bool QTrigger::receive(void *receiver, mcr_Signal *dispatchSignal,
+bool QTrigger::receive(mcr_DispatchReceiver *receiver,
+					   mcr_Signal *dispatchSignal,
 					   unsigned int modifiers)
 {
-	QTrigger *qtrigPt = static_cast<QTrigger *>(receiver);
+	QTrigger *qtrigPt = static_cast<QTrigger *>(receiver->receiver);
 	qtrigPt->trigger(dispatchSignal, modifiers);
 	return qtrigPt->blocking();
 }
 
-bool QTrigger::receiveTrigger(void *receiver, mcr_Signal *dispatchSignal,
+bool QTrigger::receiveTrigger(mcr_Trigger *receiver, mcr_Signal *dispatchSignal,
 							  unsigned int modifiers)
 {
 	dassert(receiver);
-	QTrigger *qtrigPt = static_cast<QTrigger *>(static_cast<mcr_Trigger *>(receiver)->actor);
+	QTrigger *qtrigPt = (QTrigger *)(receiver->actor);
 	dassert(qtrigPt);
 	qtrigPt->trigger(dispatchSignal, modifiers);
 	return qtrigPt->blocking();
@@ -148,11 +151,13 @@ void QTrigger::trigger(mcr_Signal *dispatchSignal, unsigned int modifiers)
 	if (_qlibmacroPt) {
 		mcr::SignalFunctions *sigs = qobject_cast<mcr::SignalFunctions *>
 									 (_qlibmacroPt->signalFunctions());
-		mcr::ISerializer *serPt = sigs->serializer(mcr_Instance_id(dispatchSignal));
+		mcr::SerSignal *serPt = sigs->serializer(mcr_Instance_id(
+									&dispatchSignal->instance));
 		if (serPt) {
-			serPt->setObject(dispatchSignal);
+			serPt->setSignal(dispatchSignal);
 			QVariantMap ret = serPt->values(false);
-			ret.insert("isignal", mcr::ISignalRef(dispatchSignal->isignal).name());
+			ret.insert("isignal", mcr::ISignalBuilder(context()).build(
+						   dispatchSignal->isignal).name());
 			emit triggered(ret, modifiers);
 			delete serPt;
 		}
@@ -167,17 +172,17 @@ void QTrigger::errStd(int errNo)
 
 void QTrigger::addDispatchImpl()
 {
-	if (_copy.ptr()->isignal) {
-		if (_actionRef.isEmpty()) {
-			mcr_Dispatcher_add(context()->ptr(), _copy.ptr(), this, receive);
+	if (_copy.self.isignal) {
+		if (_actionRef.empty()) {
+			mcr_dispatch_add(&**context(), &*_copy, this, receive);
 		} else {
-			mcr_Trigger_add_dispatch(context()->ptr(), _trigger.ptr(), _copy.ptr());
+			mcr_Trigger_add_dispatch(&**context(), &*_trigger, &*_copy);
 		}
 	} else {
-		if (_actionRef.isEmpty()) {
-			mcr_Dispatcher_add(context()->ptr(), nullptr, this, receive);
+		if (_actionRef.empty()) {
+			mcr_dispatch_add(&**context(), nullptr, this, receive);
 		} else {
-			mcr_Trigger_add_dispatch(context()->ptr(), _trigger.ptr(), nullptr);
+			mcr_Trigger_add_dispatch(&**context(), &*_trigger, nullptr);
 		}
 	}
 	if (mcr_err) {

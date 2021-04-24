@@ -18,7 +18,6 @@
 
 .pragma library
 .import "extension.js" as Extension
-.import "model.js" as Model
 .import newpsoft.macropus 0.1 as Macropus
 
 /* Letter+colon+slash */
@@ -48,135 +47,21 @@ function toUrl(str) {
 	return encodeURI(str.replace(/^\/*/, "file:///"))
 }
 
-/* Remove beginning pattern: qrc:/ => /, file::/ => /, file:/ => (/ or C:/) */
-function removeUrl(str) {
-	str = decodeURI(str)
-	if (Qt.platform.os === "windows") {
-		/* Windows pattern => C:/ */
-		str = str.replace(/^file:\/+/, "")
-	}
-	/* Non-windows pattern => / */
-	return str.replace(/^\w\w+:+\/+/, "/")
-}
-
-function isJson(str) {
-	return str && str.toString().search(/(\.json|\.js)$/) !== -1
-}
-
-/* String equals, case insensitive by default. */
-function strequal(str, reg, modifiers) {
-	var re = new RegExp('^' + reg + '$', modifiers ? modifiers : 'i')
-	return str && str.search(re) !== -1
-}
-
-/* Array contains string, case sensitive. */
-function hasString(arr, value) {
-	return arr && arr.indexOf(value) !== -1
-}
-
-/* String is "all", case insensitive. */
-function isAllString(stringValue) {
-	return stringValue.search(/^all$/i) !== -1
+/* string == "all", case insensitive. */
+function isAllString(element) {
+	return Boolean(element && /^all$/i.exec(element))
 }
 
 /* Array has "all", case insensitive. */
 function hasAllString(array) {
 	if (!array || !array.length)
 		return false
-	return !!array.find(isAllString)
-}
-
-/* Macro is in "all" modes. Empty modes is all modes. */
-function isAllMacro(macro) {
-	return !!macro && macro.modes === -1
-}
-
-function normalizeStrings(dict) {
-	var obj
-	for (var i in dict) {
-		obj = dict[i]
-		if (obj !== undefined && !Extension.isString(obj)) {
-			/* IsString */
-			if (Model.isIsString(obj)) {
-				dict[i] = obj.text
-			/* Object or Array.  A function is an Object. */
-			} else if ((typeof obj !== 'function') && Extension.isObject(obj) ||
-					 typeof obj === 'array') {
-				normalizeStrings(obj)
-			}
-		}
-	}
-}
-
-function listStrings(dict) {
-	var obj
-	for (var i in dict) {
-		obj = dict[i]
-		if (Extension.isString(obj)) {
-			dict[i] = new Model.IsString(obj)
-		/* Object or Array.  A function is an Object. */
-		} else if ((typeof obj !== 'function') && Extension.isObject(obj) ||
-				 typeof obj === 'array') {
-			listStrings(obj)
-		}
-	}
-}
-
-function removeProperty(copytron, propertyName) {
-	var ret = typeof copytron === 'array' ? [] : {}
-	var obj
-	for (var i in copytron) {
-		obj = copytron[i]
-		/* Defined and not the removing property */
-		if (obj !== undefined && i !== propertyName && (typeof obj !== "function")) {
-			if (Extension.isObject(obj) || typeof obj === 'array') {
-				ret[i] = removeProperty(obj, propertyName)
-			} else {
-				ret[i] = obj
-			}
-		}
-	}
-	return ret
+	return array.some(element => Boolean(/^all$/i.exec(element)))
 }
 
 /*! \ret obj[propertyName] with backup constant value */
 function multiplyOrConstant(obj, propertyName, multiplier, constant) {
 	return (obj && obj[propertyName] ? obj[propertyName] * multiplier : constant)
-}
-
-/* Pop given color */
-function avgCalc(col) {
-	if (Macropus.Util.isDark(col))
-		return Qt.lighter(col, 1.5)
-	return Qt.darker(col, 1.5)
-}
-
-/* Get selectable index of given flag, 0 index is "All" checkbox */
-function flagCheckbox(flag) {
-	/* no flag no index */
-	if (!flag)
-		return -1;
-	/* All flag 0 index */
-	if (flag === -1)
-		return 0;
-	var ret = 0;
-	while (flag) {
-		flag >>= 1;
-		++ret;
-	}
-	return ret;
-}
-
-/* Get array index of given flag, -1 index is "All" index */
-function flagIndex(flag) {
-	/* All or none, no array index */
-	if (!flag || flag === -1)
-		return -1;
-	var ret = 0;
-	while ((flag >>= 1)) {
-		++ret;
-	}
-	return ret;
 }
 
 /* Get bit flag of selectable index.  0th index is -1(all) */
@@ -188,24 +73,8 @@ function indexFlag(index) {
 	return index === -1 ? -1 : 1 << index
 }
 
-/* True if flag has the flag of given selectable index */
-function isBitIndex(bitVals, index) {
-	return Boolean(bitVals & (1 << index - 1))
-}
-
 function isFlagIndex(flags, index) {
 	return Boolean(flags & (1 << index))
-}
-
-function flagArrayText(flags, isStringArray) {
-	var i, ret = []
-	if (flags === -1)
-		return ["All"]
-	for (i = 0; i < isStringArray.length; i++) {
-		if (isFlagIndex(flags, i))
-			ret.push(isStringArray[i].text)
-	}
-	return ret
 }
 
 function flagModelText(flags, isStringModel) {
@@ -232,9 +101,9 @@ function arrayToFlags(stringArray, namesList) {
 }
 
 function findFlagValue(value, namesList) {
-	if (typeof value === "array" || value instanceof Array) {
+	if (Extension.isArray(value)) {
 		return arrayToFlags(value, namesList)
-	} else if (typeof value  === "string" && isNaN(value)) {
+	} else if (Extension.isString(value) && isNaN(value)) {
 		return arrayToFlags([value], namesList)
 	}
 	return Number(value)
@@ -257,24 +126,20 @@ function ancestor(parent, findObjectName) {
 }
 
 function propertyAncestor(parent, propertyName) {
-	while (parent && parent[propertyName] === undefined)
+	while (parent && !parent.hasOwnProperty(propertyName))
 		parent = parent.parent
 	return parent
 }
 
 function propertyDescendant(object, propertyName) {
 	var desc
-	if (object[propertyName] !== undefined) {
+	if (object.hasOwnProperty(propertyName)) {
 		return object
 	} else {
 		for(var i in object.children) {
-			if ((desc = propertyDescendant(object.children[i])) !== undefined)
+			if ((desc = propertyDescendant(object.children[i])))
 				return desc
 		}
 	}
 	return undefined
-}
-
-function calculateListHeight(itemHeight, count, spacing) {
-	return itemHeight * count + spacing * (count - 1)
 }

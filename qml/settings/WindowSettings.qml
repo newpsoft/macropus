@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@ Settings {
 	category: "Window"
 	property bool alwaysOnTop: false
 	property bool embedImages: false
+	property bool expandHeader: true
 	property bool framed: true
 	property bool leftHandMode: false
 	property bool toolMode: false
-	property bool toolTips: true
+	property bool enableToolTips: true
 }

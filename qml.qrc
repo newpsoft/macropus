@@ -345,27 +345,32 @@
         <file>icons/BlueSphere/scalable/window_nofullscreen.svg</file>
         <file>icons/BlueSphere/scalable/window_nofullscreen-small.svg</file>
         <file>icons/BlueSphere/scalable/xmag.svg</file>
-        <file>qml/controls/ActionBar.qml</file>
-        <file>qml/controls/ActionList.qml</file>
-        <file>qml/controls/CheckList.qml</file>
-        <file>qml/controls/Dialogs.qml</file>
-        <file>qml/controls/FlagChecks.qml</file>
-        <file>qml/controls/InterceptSettings.qml</file>
+        <file>icons/Macropus.svg</file>
+        <file>qml/controls/ApplicationWindow.qml</file>
+        <file>qml/controls/DropList.qml</file>
         <file>qml/controls/EditMacros.qml</file>
-        <file>qml/controls/OtherSettings.qml</file>
-        <file>qml/controls/StyleSettings.qml</file>
+        <file>qml/controls/ErrorDialog.qml</file>
+        <file>qml/controls/FileDialog.qml</file>
+        <file>qml/controls/FilterFileDialog.qml</file>
+        <file>qml/controls/FlagChecks.qml</file>
         <file>qml/controls/JsonSummary.qml</file>
         <file>qml/controls/Layout.qml</file>
-        <file>qml/controls/MacroList.qml</file>
+        <file>qml/controls/ListActionBar.qml</file>
+        <file>qml/controls/MacroFile.qml</file>
         <file>qml/controls/MainWindow.qml</file>
         <file>qml/controls/MessageDialog.qml</file>
         <file>qml/controls/ModeList.qml</file>
         <file>qml/controls/ModeTabs.qml</file>
-        <file>qml/controls/PhaseTrigger.qml</file>
+        <file>qml/controls/ModifierChecks.qml</file>
         <file>qml/controls/PwDialog.qml</file>
         <file>qml/controls/RecordOneWindow.qml</file>
+        <file>qml/controls/RunActionBar.qml</file>
         <file>qml/controls/RunMacros.qml</file>
         <file>qml/controls/SelectorWindow.qml</file>
+        <file>qml/controls/settings/InterceptSettings.qml</file>
+        <file>qml/controls/settings/MacroSettings.qml</file>
+        <file>qml/controls/settings/OtherSettings.qml</file>
+        <file>qml/controls/settings/StyleSettings.qml</file>
         <file>qml/controls/SettingsPage.qml</file>
         <file>qml/controls/SettingsWindow.qml</file>
         <file>qml/controls/signal/Command.qml</file>
@@ -377,39 +382,69 @@
         <file>qml/controls/signal/NoOp.qml</file>
         <file>qml/controls/signal/Scroll.qml</file>
         <file>qml/controls/signal/StringKey.qml</file>
-        <file>qml/controls/SignalList.qml</file>
         <file>qml/controls/StringList.qml</file>
         <file>qml/controls/trigger/Action.qml</file>
+        <file>qml/controls/trigger/Alarm.qml</file>
         <file>qml/controls/trigger/Staged.qml</file>
         <file>qml/controls/trigger/StageList.qml</file>
-        <file>qml/controls/TriggerList.qml</file>
-        <file>qml/controls/MacroSettings.qml</file>
-        <file>qml/controls/ModifierChecks.qml</file>
+        <file>qml/extension.js</file>
         <file>qml/files.js</file>
         <file>qml/functions.js</file>
         <file>qml/list_util.js</file>
         <file>qml/main.qml</file>
-        <file>qml/extension.js</file>
         <file>qml/model.js</file>
         <file>qml/settings/Files.qml</file>
-        <file>qml/settings/LibmacroSettings.qml</file>
-        <file>qml/settings/qmldir</file>
-        <file>qml/settings/SignalPages.qml</file>
-        <file>qml/settings/Style.qml</file>
-        <file>qml/settings/TriggerPages.qml</file>
-        <file>qml/settings/WindowSettings.qml</file>
-        <file>qml/settings.qml</file>
-        <file>qml/controls/trigger/Alarm.qml</file>
-        <file>qml/controls/Recorder.qml</file>
         <file>qml/settings/Geometry.qml</file>
-        <file>qml/controls/FileDialog.qml</file>
-        <file>qml/controls/FilterFileDialog.qml</file>
-        <file>qml/controls/Draggable.qml</file>
-        <file>qml/controls/Tile.qml</file>
-        <file>qml/controls/TabIndicator.qml</file>
+        <file>qml/settings/LibmacroSettings.qml</file>
         <file>qml/settings/PlatformStyle.qml</file>
-        <file>qml/controls/ApplicationWindow.qml</file>
-        <file>qml/settings/ButtonStyler.qml</file>
-        <file>icons/Macropus.svg</file>
+        <file>qml/settings/qmldir</file>
+        <file>qml/settings/Style.qml</file>
+        <file>qml/settings/WindowSettings.qml</file>
+        <file>qml/settings/SignalSerial.qml</file>
+        <file>qml/settings/TriggerSerial.qml</file>
+        <file>qml/settings.qml</file>
+        <file>qml/views/ApplicationWindowForm.qml</file>
+        <file>qml/views/ButtonStyle.qml</file>
+        <file>qml/views/ComboBoxStyle.qml</file>
+        <file>qml/views/DragForm.qml</file>
+        <file>qml/views/DragIndicator.qml</file>
+        <file>qml/views/DropForm.qml</file>
+        <file>qml/views/DropListForm.qml</file>
+        <file>qml/views/DropListItemForm.qml</file>
+        <file>qml/views/RunMacroForm.qml</file>
+        <file>qml/views/ExpandableHeader.qml</file>
+        <file>qml/views/FrameContent.qml</file>
+        <file>qml/views/ListActionButtons.qml</file>
+        <file>qml/views/ListActionColumn.qml</file>
+        <file>qml/views/ListActionRow.qml</file>
+        <file>qml/views/MacroForm.qml</file>
+        <file>qml/views/ModeCheckList.qml</file>
+        <file>qml/views/TabIndicator.qml</file>
+        <file>qml/views/TitlePage.qml</file>
+        <file>qml/views/WindowForm.qml</file>
+        <file>qml/controls/EditPage.qml</file>
+        <file>qml/controls/EditMacrosActionBar.qml</file>
+        <file>qml/unused.js</file>
+        <file>qml/controls/settings/CustomInterceptList.qml</file>
+        <file>qml/controls/settings/+linux/CustomInterceptList.qml</file>
+        <file>qml/controls/DropListColumn.qml</file>
+        <file>qml/controls/DropListFlow.qml</file>
+        <file>qml/views/WidthConstraint.qml</file>
+        <file>qml/views/WidthConstraintItem.qml</file>
+        <file>qml/controls/settings/+windows/CustomInterceptList.qml</file>
+        <file>qml/views/OpacityConstraint.qml</file>
+        <file>qml/views/ExpandableTutorialForm.qml</file>
+        <file>qml/controls/EditSignals.qml</file>
+        <file>qml/controls/EditTriggers.qml</file>
+        <file>qml/views/InterfaceForm.qml</file>
+        <file>qml/controls/InterfaceView.qml</file>
+        <file>qml/settings/Vars.qml</file>
+        <file>qml/views/WidthListener.qml</file>
+        <file>qml/views/HotkeyForm.qml</file>
+        <file>qml/views/RecordMacroForm.qml</file>
+        <file>qml/controls/HotkeyWindow.qml</file>
+        <file>qml/controls/RecordHotkeyDialog.qml</file>
+        <file>qml/controls/Trigger.qml</file>
+        <file>qml/views/OneShot.qml</file>
     </qresource>
 </RCC>

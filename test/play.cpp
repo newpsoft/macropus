@@ -16,9 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CRT_SECURE_NO_WARNINGS
-	#define _CRT_SECURE_NO_WARNINGS
-#endif
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "engine.h"
 
@@ -28,6 +26,7 @@
 #include "util.h"
 #include "qlibmacro.h"
 #include "qtrigger.h"
+#include "qclipboardproxy.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -56,6 +55,9 @@ int main(int argc, char *argv[])
 
 		QQmlApplicationEngine engine;
 		/* QML register types cannot be separated into a function */
+		qmlRegisterSingletonType<QClipboardProxy>(MACROPUS_PLUGIN_NAME, MACROPUS_PLUGIN_VERSION,
+									   "Clipboard",
+									   qmlClipboardProvider);
 		qmlRegisterSingletonType<FileUtil>(MACROPUS_PLUGIN_NAME, MACROPUS_PLUGIN_VERSION,
 									   "FileUtil",
 									   qmlFileUtilProvider);
@@ -72,7 +74,7 @@ int main(int argc, char *argv[])
 		qmlRegisterType<QTrigger>(MACROPUS_PLUGIN_NAME, MACROPUS_PLUGIN_VERSION,
 								  "QTrigger");
 		initializeEngine(&engine, MACROPUS_PLUGIN_NAME);
-		engine.load(QLatin1Literal(MCR_STR(PWD) "/test/play.qml"));
+		engine.load(QLatin1String(MCR_STR(PWD) "/test/play.qml"));
 		if (engine.rootObjects().isEmpty()) {
 			onError(engine);
 			return -1;

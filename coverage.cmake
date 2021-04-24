@@ -1,5 +1,5 @@
 if (BUILD_TESTING)
-	enable_testing()
+	enable_testing(true)
 	include(CTest)
 
 	if (TARGET tst_Macropus)

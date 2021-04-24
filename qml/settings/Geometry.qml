@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -17,14 +17,13 @@
 */
 
 import QtQuick 2.10
-import QtQuick.Window 2.0
+import QtQuick.Window 2.2
 import Qt.labs.settings 1.0
-import "../functions.js" as Functions
 
 QtObject {
 	id: root
 
-	property var window
+	property QtObject window
 	onWindowChanged: apply()
 	Component.onCompleted: apply()
 	property alias category: settings.category
@@ -35,34 +34,40 @@ QtObject {
 	property alias visibility: settings.visibility
 	property Settings settings: Settings {
 		id: settings
-		property int width: Style.windowWidth
+		property int width: Style.pageWidth
 		property int height: Screen.height * 0.62
 		/* Center window.  x = screen / 2 - width / 2 = (screen - width) / 2 */
-		property int x: Screen.width * 0.19
-		property int y: Screen.height * 0.19
+		property int x: Screen.virtualX + Screen.width * 0.19
+		property int y: Screen.virtualY + Screen.height * 0.19
 		property int visibility: Window.Maximized
 	}
 
 	property Connections connectWindow: Connections {
 		target: window
 		ignoreUnknownSignals: true
-		onVisibilityChanged: save()
-		onClosing: saveImpl()
+		function onVisibilityChanged() {
+			save()
+		}
+		function onClosing() {
+			saveImpl()
+		}
 	}
 
 	function save() {
-		if (window && window.visibility !== visibility) {
+		if (window) {
 			switch (window.visibility) {
 			case Window.AutomaticVisibility:
 			case Window.Windowed:
 				saveImpl()
-				visibility = window.visibility
+				if (window.hasOwnProperty("visibility"))
+					visibility = window.visibility
 				break
 			case Window.Hidden:
 			case Window.Minimized:
 				break
 			default:
-				visibility = window.visibility
+				if (window.hasOwnProperty("visibility"))
+					visibility = window.visibility
 			}
 		}
 	}
@@ -78,10 +83,10 @@ QtObject {
 
 	function apply() {
 		if (window) {
-			window.x = x
-			window.y = y
-			window.width = width
-			window.height = height
+			window.x = Qt.binding(() => x)
+			window.y = Qt.binding(() => y)
+			window.width = Qt.binding(() => width)
+			window.height = Qt.binding(() => height)
 		}
 	}
 }

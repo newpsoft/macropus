@@ -17,114 +17,216 @@
 */
 
 .pragma library
+.import "extension.js" as Extension
 
-function getFunction(model) {
-	return function (index) {
-		return model.get(index)
-	}
+function count(model) {
+	return Extension.isModel(model) ? model.count : model.length
 }
 
-function glob(model, index, fnGetItem) {
-	if (!fnGetItem)
-		fnGetItem = getFunction(model)
+function get(model, index) {
+	return Extension.isModel(model) ? model.get(index) : model[index]
+}
+
+function getFunction(model) {
+	if (Extension.isModel(model))
+		return index => model.get(index)
+	return index => model[index]
+}
+
+function glob(model, index, fnGet) {
+	if (!fnGet)
+		fnGet = getFunction(model)
 	/* Out of range or index not selected */
-	if (index >= model.count || !fnGetItem(index).selected)
+	if (index >= count(model))
+		throw "EINVAL"
+	if (!fnGet(index).selected)
 		return false
 	var ret = {
 		'first': index,
 		'last': index
 	}
 	var localIndex = index + 1
-	while (localIndex < model.count && fnGetItem(localIndex).selected) {
+	while (localIndex < count(model) && fnGet(localIndex).selected) {
 		++ret.last
 		++localIndex
 	}
 	localIndex = index - 1
-	while (localIndex >= 0 && fnGetItem(localIndex).selected) {
+	while (localIndex >= 0 && fnGet(localIndex).selected) {
 		--ret.first
 		--localIndex
 	}
 	return ret
 }
 
-function moveGlob(model, fromIndex, toIndex, fnGetItem) {
-	var myGlob = glob(model, fromIndex, fnGetItem)
+function moveGlob(model, fromIndex, toIndex, fnGet) {
+	var myGlob = glob(model, fromIndex, fnGet)
 	if (!myGlob)
 		return
-	var count = myGlob.last - myGlob.first + 1
-	if (toIndex > myGlob.last) {
-		model.move(myGlob.first, toIndex - count, count)
-	} else if (toIndex < myGlob.first) {
-		model.move(myGlob.first, toIndex, count)
+	var globCount = myGlob.last - myGlob.first + 1
+	// nothing to do
+	if (toIndex >= myGlob.first && toIndex <= myGlob.last)
+		return
+	if (toIndex > myGlob.last)
+		toIndex -= globCount
+	if (Extension.isModel(model)) {
+		model.move(myGlob.first, toIndex, globCount)
+	} else {
+		myGlob = model.splice(myGlob.first, globCount)
+		model.splice(toIndex, 0, myGlob)
 	}
 }
 
-function lastSelected(model, fnGetItem) {
-	if (!fnGetItem)
-		fnGetItem = getFunction(model)
-	var i = model.count
+function lastSelected(model, fnGet) {
+	if (!fnGet)
+		fnGet = getFunction(model)
+	var i = count(model)
     while (i-- > 0) {
-		if (fnGetItem(i).selected)
+		if (fnGet(i).selected)
 			return i
     }
     return -1
 }
 
-function addAfterLast(model, obj, fnGetItem) {
-	var i = lastSelected(model, fnGetItem)
+function addAfterLast(model, obj, fnGet) {
+	if (obj === undefined)
+		obj = {}
+	var i = lastSelected(model, fnGet)
 	if (i === -1) {
-		model.append(obj)
+		if (Extension.isModel(model)) {
+			model.append(obj)
+		} else {
+			model.push(obj)
+		}
 	} else {
-		model.insert(i + 1, obj)
+		if (Extension.isModel(model)) {
+			model.insert(i + 1, obj)
+		} else {
+			model.splice(i + 1, 0, obj)
+		}
 	}
 }
 
-function moveSelected(model, index, fnGetItem) {
-	if (!fnGetItem)
-		fnGetItem = getFunction(model)
-	var i, j, obj
-	if (index < 0 || index > model.count)
+/// \todo Not working, is buggy
+function moveSelected(model, index, fnGet) {
+	if (!fnGet)
+		fnGet = getFunction(model)
+	if (index < 0 || index > count(model))
 		throw "EINVAL"
-	var localIndex = index
-	for (i = index; i < model.count; i++) {
-		obj = fnGetItem(i)
-		if (obj.selected) {
-			if (i !== localIndex) {
-				model.move(i, localIndex, 1)
+
+	var indices = selectedIndices(model, fnGet)
+	var selection = indices.map(getFunction(model))
+
+	selection = Extension.createAndCopy(selection, Extension.innerModelReplacer)
+	var i = selection.length
+	if (i) {
+		// includes 0-(length-1)
+		while (i--) {
+			if (Extension.isModel(model)) {
+				model.remove(indices[i])
+			} else {
+				model.splice(indices[i], 1)
 			}
-			++localIndex
+			if (indices[i] < index)
+				--index
 		}
-	}
-	localIndex = index
-	for (i = localIndex; i >= 0; i--) {
-		obj = fnGetItem(i)
-		if (obj.selected) {
-			if (i !== localIndex) {
-				model.move(i, localIndex, 1)
-			}
-			--localIndex
+		// Assert 0 <= index <= count(model)
+		if (index < 0 || index > count(model))
+			throw "list_util moveSelected: Index out of range from unknown error"
+		if (Extension.isModel(model)) {
+			model.insert(index, selection)
+		} else {
+			model.splice(index, 0, selection)
+		}
+		i = index + selection.length
+		// Ensure inserted items are still selected
+		while (index < i) {
+			fnGet(index++).selected = true
 		}
 	}
 }
 
-function setSelection(model, arr, fnGetItem) {
+/* Return array of model items */
+function selection(model, fnGet) {
+	return selectedIndices(model, fnGet).map(getFunction(model))
+}
+
+function selectedIndices(model, fnGet) {
+	if (!fnGet)
+		fnGet = getFunction(model)
+	return Extension.indexArray(count(model)).filter(element => fnGet(element).selected)
+}
+
+function setSelection(model, arr, fnGet) {
+	if (!fnGet)
+		fnGet = getFunction(model)
 	for (var i in arr) {
-		if (i < model.count) {
-			fnGetItem(i).selected = arr[i]
-		}
+		if (i < count(model))
+			fnGet(i).selected = arr[i]
 	}
 }
 
-function removeSelected(model, fnGetItem) {
-	var i = model.count
+function removeSelected(model, fnGet) {
+	if (!fnGet)
+		fnGet = getFunction(model)
+	var i = count(model)
 	var hasRemoved = false
 	while (i--) {
-		if (fnGetItem(i).selected) {
-			model.remove(i)
+		if (fnGet(i).selected) {
+			if (Extension.isModel(model)) {
+				model.remove(i)
+			} else {
+				model.splice(i, 1)
+			}
 			if (!hasRemoved)
 				hasRemoved = true
 		}
 	}
-	if (!hasRemoved && model.count)
-		model.remove(model.count - 1)
+	if (!hasRemoved && count(model)) {
+		if (Extension.isModel(model)) {
+			model.remove(count(model) - 1)
+		} else {
+			model.splice(count(model) - 1, 1)
+		}
+	}
+}
+
+function cutSelected(model, fnGet) {
+	return copySelected(model, fnGet, true)
+}
+
+function copySelected(model, fnGet, flagRemoveSelected) {
+	if (!fnGet)
+		fnGet = getFunction(model)
+	var ret = [], obj, i
+	for (i = count(model) - 1; i >= 0; i--) {
+		if (fnGet(i).selected) {
+			ret.unshift(Extension.createAndCopy(get(model, i), Extension.innerModelReplacer))
+			if (flagRemoveSelected) {
+				model.remove(i)
+			} else {
+				model.splice(i, 1)
+			}
+		}
+	}
+	return ret.length ? ret : null
+}
+
+function insertAfterLast(model, itemArray, fnGet) {
+	if (!fnGet)
+		fnGet = getFunction(model)
+	var i = lastSelected(model, fnGet), end
+	if (i === -1) {
+		i = count(model)
+	} else {
+		++i
+	}
+	if (Extension.isModel(model)) {
+		model.insert(i, itemArray)
+	} else {
+		model.splice(i, 0, itemArray)
+	}
+	// Ensure inserted items are still selected
+	for (end = i + itemArray.length; i < end; i++) {
+		fnGet(i).selected = true
+	}
 }

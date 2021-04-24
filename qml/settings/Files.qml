@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -18,7 +18,6 @@
 
 pragma Singleton
 import Qt.labs.settings 1.0
-import newpsoft.macropus 0.1
 
 Settings {
 	category: "Files"

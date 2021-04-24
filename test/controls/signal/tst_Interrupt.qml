@@ -2,6 +2,7 @@ import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtTest 1.0
 import "../../../qml/controls/signal"
+import "../../../qml/settings"
 import "../../../qml/model.js" as Model
 import "../../functions.js" as Functions
 
@@ -29,8 +30,6 @@ TestCase {
 		dynamicRoles: true
 	}
 
-	property var interruptTypes: Model.interruptTypes()
-
 	property var type: findChild(interrupt, "type")
 	property var target: findChild(interrupt, "target")
 	property var find: findChild(interrupt, "find")
@@ -42,7 +41,7 @@ TestCase {
 	}
 
 	function test_interruptTypes() {
-		compare(type.model.length, interruptTypes.length)
+		compare(type.model.length, Vars.interruptTypes.length)
 	}
 
 	function test_null() {
@@ -65,7 +64,7 @@ TestCase {
 		compare(interrupt.model.target, undefined)
 
 		// Initialize properties
-		type.currentIndexChanged()
+		type.activated(type.currentIndex)
 		target.textChanged()
 		expectModel()
 
@@ -102,13 +101,13 @@ TestCase {
 	}
 
 	function fiddle() {
-		Functions.fiddleCombo(type, interruptTypes, interrupt.model,
+		Functions.fiddleCombo(type, Vars.interruptTypes, interrupt.model,
 							  "type", compare)
 		Functions.fiddleText(target, interrupt.model, "target", compare)
 	}
 
 	function fiddleModel() {
-		Functions.fiddleComboModel(type, interruptTypes, interrupt.model,
+		Functions.fiddleComboModel(type, Vars.interruptTypes, interrupt.model,
 								   "type", compare)
 		Functions.fiddleTextModel(target, interrupt.model, "target", compare)
 	}

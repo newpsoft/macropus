@@ -61,7 +61,7 @@ public:
 
 	inline unsigned int modifiers() const
 	{
-		if (_actionRef.isEmpty())
+		if (_actionRef.empty())
 			return 0;
 		return _actionRef.data<mcr_Action>()->modifiers;
 	}
@@ -69,7 +69,7 @@ public:
 
 	inline unsigned int triggerFlags() const
 	{
-		if (_actionRef.isEmpty())
+		if (_actionRef.empty())
 			return 0;
 		return _actionRef.data<mcr_Action>()->trigger_flags;
 	}
@@ -85,16 +85,16 @@ signals:
 	void error(const QString &msg) const;
 
 private:
-	mcr::TriggerRef _actionRef;
+	mcr::TriggerBuilder _actionRef;
 	bool _blocking;
 	mcr::Signal _copy;
 	bool _dispatchAdded;
 	mcr::Trigger _trigger;
 	QLibmacro *_qlibmacroPt;
 
-	static bool receive(void *receiver,
+	static bool receive(mcr_DispatchReceiver *receiver,
 						mcr_Signal *dispatchSignal, unsigned int modifiers);
-	static bool receiveTrigger(void *receiver, struct mcr_Signal * dispatchSignal,
+	static bool receiveTrigger(mcr_Trigger *receiver, struct mcr_Signal * dispatchSignal,
 							   unsigned int modifiers);
 	void trigger(mcr_Signal *dispatchSignal, unsigned int modifiers);
 	void errStd(int errNo);

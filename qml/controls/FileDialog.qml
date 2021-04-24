@@ -59,4 +59,9 @@ FileDialog {
 		category: view.category
 		property string folder: Functions.toUrl(FileUtil.home())
 	}
+
+	property Geometry geometry: Geometry {
+		category: view.category
+		window: view
+	}
 }

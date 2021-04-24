@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@ import QtQuick 2.10
 import QtQuick.Controls.Material 2.3
 import QtQuick.Controls.Universal 2.3
 import Qt.labs.settings 1.0
-import "../functions.js" as Functions
 import newpsoft.macropus 0.1
 
 Item {
@@ -32,6 +31,15 @@ Item {
 	Universal.foreground: settings.foreground
 	Material.primary: settings.primary
 	Material.theme: settings.theme ? Material.Light : Material.Dark
+
+	property alias settings: settings
+	property alias background: settings.background
+	property alias foreground: settings.foreground
+	property alias primary: settings.primary
+	property alias accent: settings.accent
+	property alias elevation: settings.elevation
+	property alias theme: settings.theme
+
 	states: State {
 		when: settings.theme === 2
 		PropertyChanges {
@@ -51,6 +59,7 @@ Item {
 			theme: Universal.System
 		}
 	}
+
 	Settings {
 		id: settings
 		category: "Style"

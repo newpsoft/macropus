@@ -54,6 +54,7 @@ void applicationSetup();
  */
 void initializeEngine(QQmlEngine *engine, const char *uri, QLibmacro *qlibmacroPt = nullptr);
 
+QObject *qmlClipboardProvider(QQmlEngine *engine, QJSEngine *scriptEngine);
 QObject *qmlFileUtilProvider(QQmlEngine *engine, QJSEngine *scriptEngine);
 QObject *qmlUtilProvider(QQmlEngine *engine, QJSEngine *scriptEngine);
 

@@ -18,6 +18,8 @@
 
 #include "qlibmacro.h"
 
+#include <QCursor>
+
 const unsigned char *KeyProvider::generate(const void *ss)
 {
 	unsigned char buffer[MCR_AES_BLOCK_SIZE];
@@ -39,29 +41,23 @@ QLibmacro::QLibmacro(QObject *parent)
 {
 	_signalFunctions = new mcr::SignalFunctions(this, _context);
 	_triggerFunctions = new mcr::TriggerFunctions(this, _context);
-	mcr_Dispatcher_set_enabled_all(_context->ptr(), true);
+	mcr_dispatch_set_enabled_all(&**_context, true);
 	mcr::Command::setKeyProvider(_keyProvider);
 	mcr::StringKey::setKeyProvider(_keyProvider);
-	_context->ptr()->signal.is_generic_dispatcher = true;
+	context()->self.base.generic_dispatcher_flag = true;
 	_applyTypeNames["press"] = MCR_SET;
-	_applyTypeNames[tr("Press").toLower()] = MCR_SET;
 	_applyTypeNames["release"] = MCR_UNSET;
-	_applyTypeNames[tr("Release").toLower()] = MCR_UNSET;
 	_applyTypeNames["set"] = MCR_SET;
-	_applyTypeNames[tr("Set").toLower()] = MCR_SET;
 	_applyTypeNames["unset"] = MCR_UNSET;
-	_applyTypeNames[tr("Unset").toLower()] = MCR_UNSET;
 	_applyTypeNames["both"] = MCR_BOTH;
-	_applyTypeNames[tr("Both").toLower()] = MCR_BOTH;
 	_applyTypeNames["toggle"] = MCR_TOGGLE;
-	_applyTypeNames[tr("Toggle").toLower()] = MCR_TOGGLE;
 }
 
 QLibmacro::~QLibmacro()
 {
 	try {
 		clear();
-		if (_context->isEnabled()) {
+		if (_context->enabled()) {
 			qCritical() <<
 						tr("Error: Libmacro is enabled on program exit. Please read Libmacro documentation.");
 		}
@@ -85,26 +81,26 @@ QString QLibmacro::upTypeName(const int upType) const
 {
 	switch (upType) {
 	case MCR_UNSET:
-		return tr("Release");
+		return "Release";
 	case MCR_BOTH:
-		return tr("Both");
+		return "Both";
 	case MCR_TOGGLE:
-		return tr("Toggle");
+		return "Toggle";
 	}
-	return tr("Press");
+	return "Press";
 }
 
 QString QLibmacro::applyTypeName(const int applyType) const
 {
 	switch (applyType) {
 	case MCR_UNSET:
-		return tr("Unset");
+		return "Unset";
 	case MCR_BOTH:
-		return tr("Both");
+		return "Both";
 	case MCR_TOGGLE:
-		return tr("Toggle");
+		return "Toggle";
 	}
-	return tr("Set");
+	return "Set";
 }
 
 QStringList QLibmacro::applyTypeNames() const
@@ -117,10 +113,17 @@ QStringList QLibmacro::applyTypeNames() const
 	return ret;
 }
 
+QPoint QLibmacro::cursorPosition()
+{
+	mcr_SpacePosition buffer = {0};
+	mcr_cursor_position(&**context(), buffer);
+	return QPoint(buffer[MCR_X], buffer[MCR_Y]);
+}
+
 void QLibmacro::setBlockable(bool bVal)
 {
 	if (bVal != isBlockable()) {
-		mcr_intercept_set_blockable(context()->ptr(), bVal);
+		mcr_intercept_set_blockable(&**_context, bVal);
 		emit blockableChanged();
 	}
 }
@@ -150,6 +153,7 @@ void QLibmacro::setMacros(const QVariantList &mcrList)
 		macro = new mcr::Macro(context());
 		fill(macro, mcrList[i].toMap());
 		_macros << macro;
+		context()->macrosInterrupted.map(macro->name(), macro);
 	}
 }
 
@@ -158,13 +162,14 @@ void QLibmacro::addMacro(const QVariantMap &dict)
 	mcr::Macro *macro = new mcr::Macro(context());
 	fill(macro, dict);
 	_macros << macro;
+	context()->macrosInterrupted.map(macro->name(), macro);
 }
 
 void QLibmacro::runMacro(const QVariantMap &mcr)
 {
 	mcr::Macro *macro = new mcr::Macro(context());
 	fill(macro, mcr);
-	mcr_Macro_send(macro->ptr());
+	macro->run();
 	/* Disable for concurrency problems */
 	macro->setEnabled(false);
 	thrd_yield();
@@ -184,6 +189,7 @@ void QLibmacro::resetIntercept()
 
 void QLibmacro::deinitialize()
 {
+	mcr::Interrupt::defaultInterrupt->interrupt(nullptr, mcr::Macro::DISABLE);
 	if (_context)
 		_context->setEnabled(false);
 }
@@ -197,7 +203,7 @@ void QLibmacro::clear()
 {
 	/* Less chance of things accessed while deleting */
 	context()->macrosInterrupted.clear();
-	mcr_Dispatcher_clear_all(context()->ptr());
+	mcr_dispatch_clear_all(&**_context);
 	qDeleteAll(_macros);
 	_macros.clear();
 }
@@ -208,7 +214,7 @@ void QLibmacro::fill(mcr::Macro *macroPt, const QVariantMap &values)
 	/* Just in case this is not a new object */
 	macroPt->setEnabled(false);
 
-	macroPt->setName(values.value("name", "").toString().toStdString());
+	macroPt->setName(values.value("name", "").toString().toUtf8().constData());
 	macroPt->setBlocking(values.value("blocking", false).toBool());
 	macroPt->setSticky(values.value("sticky", false).toBool());
 	macroPt->setThreadMax(values.value("threadMax", 1).toUInt());
@@ -224,60 +230,96 @@ void QLibmacro::fill(mcr::Macro *macroPt, const QVariantMap &values)
 void QLibmacro::setSignals(mcr::Macro *macroPt, const QVariantList &signalList)
 {
 	dassert(macroPt);
-	mcr::SignalRef sigRef;
-	macroPt->resizeSignals(static_cast<size_t>(signalList.length()));
-	for (int i = 0; i < signalList.length(); i++) {
-		sigRef = macroPt->signal(static_cast<size_t>(i));
-		fill(sigRef, signalList[i].toMap());
+	mcr::SignalBuilder sigRef;
+	if (signalList.empty()) {
+		macroPt->clearSignals();
+		return;
 	}
+	int count = signalList.size();
+	mcr::Signal *sigList = new mcr::Signal[count];
+	try {
+		for (int i = 0; i < signalList.length(); i++) {
+			fill(sigRef.build(&*sigList[i]), signalList[i].toMap());
+		}
+		macroPt->setSignals(sigList, count);
+	} catch (int e) {
+		if (sigList)
+			delete[] sigList;
+		throw e;
+	}
+	if (sigList)
+		delete[] sigList;
 }
 
 void QLibmacro::setActivators(mcr::Macro *macroPt,
 							  const QVariantList &activators)
 {
 	dassert(macroPt);
-	mcr::SignalRef sigRef;
-	std::vector<mcr::Signal> sigList(static_cast<size_t>(activators.length()));
-	for (int i = 0; i < activators.length(); i++) {
-		sigRef = sigList[static_cast<size_t>(i)].ptr();
-		fill(sigRef, activators[i].toMap());
+	mcr::SignalBuilder sigRef;
+	if (activators.empty()) {
+		macroPt->clearActivators();
+		return;
 	}
-	if (!sigList.empty())
-		macroPt->setActivators({sigList.front(), sigList.back()});
+	int count = activators.size();
+	mcr::Signal *sigList = new mcr::Signal[count];
+	try {
+		for (int i = 0; i < count; i++) {
+			fill(sigRef.build(&*sigList[i]), activators[i].toMap());
+		}
+		macroPt->setActivators(sigList, count);
+	} catch (int e) {
+		if (sigList)
+			delete[] sigList;
+		throw e;
+	}
+	if (sigList)
+		delete[] sigList;
 }
 
 void QLibmacro::setTriggers(mcr::Macro *macroPt, const QVariantList &triggers)
 {
 	dassert(macroPt);
-	mcr::TriggerRef trigRef;
-	std::vector<mcr::Trigger> trigList(static_cast<size_t>(triggers.length()));
-	for (int i = 0; i < triggers.length(); i++) {
-		trigRef = trigList[static_cast<size_t>(i)].ptr();
-		fill(trigRef, triggers[i].toMap());
+	mcr::TriggerBuilder trigRef;
+	if (triggers.empty()) {
+		macroPt->clearTriggers();
+		return;
 	}
-	if (!trigList.empty())
-		macroPt->setTriggers({trigList.front(), trigList.back()});
+	int count = triggers.size();
+	mcr::Trigger *trigList = new mcr::Trigger[count];
+	try {
+		for (int i = 0; i < count; i++) {
+			fill(trigRef.build(&*trigList[i]), triggers[i].toMap());
+		}
+		macroPt->setTriggers(trigList, count);
+	} catch (int e) {
+		if (trigList)
+			delete[] trigList;
+		throw e;
+	}
+	if (trigList)
+		delete[] trigList;
 }
 
-void QLibmacro::fill(mcr::SignalRef &sigRef, const QVariantMap &values)
+void QLibmacro::fill(mcr::SignalBuilder &sigRef, const QVariantMap &values)
 {
 	QByteArray signame = values.value("isignal", "").toString().toUtf8();
-	sigRef = signame.constData();
-	mcr::ISerializer *serPt = _signalFunctions->serializer(sigRef.id());
+	sigRef.build(signame.constData());
+	mcr::SerSignal *serPt = _signalFunctions->serializer(sigRef.id());
 	if (serPt) {
-		serPt->setObject(sigRef.signal());
+		serPt->setSignal(sigRef.signal());
 		serPt->setValues(values);
 		delete serPt;
 	}
+	sigRef.setDispatch(false);
 }
 
-void QLibmacro::fill(mcr::TriggerRef &trigRef, const QVariantMap &values)
+void QLibmacro::fill(mcr::TriggerBuilder &trigRef, const QVariantMap &values)
 {
 	QByteArray trigname = values.value("itrigger", "").toString().toUtf8();
-	trigRef = trigname.constData();
-	mcr::ISerializer *serPt = _triggerFunctions->serializer(trigRef.id());
+	trigRef.build(trigname.constData());
+	mcr::SerTrigger *serPt = _triggerFunctions->serializer(trigRef.id());
 	if (serPt) {
-		serPt->setObject(trigRef.trigger());
+		serPt->setTrigger(trigRef.trigger());
 		serPt->setValues(values);
 		delete serPt;
 	}

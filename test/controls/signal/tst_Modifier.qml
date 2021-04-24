@@ -1,6 +1,7 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtTest 1.0
+import "../../../qml/settings"
 import "../../../qml/controls/signal"
 import "../../../qml/model.js" as Model
 import "../../functions.js" as Functions
@@ -29,8 +30,6 @@ TestCase {
 		dynamicRoles: true
 	}
 
-	property var applyTypes: Model.applyTypes()
-
 	property var current: findChild(mod, "current")
 	property var modifiers: findChild(mod, "modifiers")
 	property var applyType: findChild(mod, "applyType")
@@ -41,7 +40,7 @@ TestCase {
 	}
 
 	function test_keyNames() {
-		compare(applyType.model.length, applyTypes.length)
+		compare(applyType.model.length, Vars.applyTypeLabels.length)
 	}
 
 	function test_null() {
@@ -65,7 +64,7 @@ TestCase {
 
 		// Initialize properties
 		modifiers.modifiersChanged()
-		applyType.currentIndexChanged()
+		applyType.activated(applyType.currentIndex)
 		expectModel()
 
 		fiddle()
@@ -88,12 +87,12 @@ TestCase {
 	}
 
 	function fiddle() {
-		Functions.fiddleCombo(applyType, applyTypes, mod.model,
+		Functions.fiddleCombo(applyType, Vars.applyTypeLabels, mod.model,
 							  "applyType", compare)
 	}
 
 	function fiddleModel() {
-		Functions.fiddleComboModel(applyType, applyTypes, mod.model,
+		Functions.fiddleComboModel(applyType, Vars.applyTypeLabels, mod.model,
 								   "applyType", compare)
 
 		mod.model.modifiers = 0

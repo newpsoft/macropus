@@ -16,11 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-.import newpsoft.macropus 0.1 as Macropus
+.pragma library
+.import "extension.js" as Extension
 
+// All objects may have properties "objectName" and "selected"
 function Macro(name) {
-	this.selected = false
-
 	this.activators = []
 	this.blocking = true
 	this.enabled = true
@@ -37,104 +37,183 @@ function Macro(name) {
 }
 
 function Signal(isignal) {
-	this.selected = false
-
-	this.isignal = isignal ? isignal : undefined
+	this.isignal = isignal
 	this.dispatch = false
 }
 
 function Trigger(itrigger) {
-	this.selected = false
-
-	this.itrigger = itrigger ? itrigger : undefined
+	this.itrigger = itrigger
 }
 
 function Stage(intercept, modifiers) {
-	this.selected = false
-
 	this.blocking = true
 	this.intercept = intercept ? intercept : new Signal()
 	this.measurementError = Qt.application.font.pixelSize
 	this.modifiers = modifiers ? modifiers : 0
-	this.triggerFlags = MCR_TF_ALL
+	this.triggerFlags = 4
 }
 
-function IsString(text) {
-	this.selected = false
+function TextObject(text) {
 	this.text = text ? text : ""
 }
 
-function isIsString(dict) {
-	return isObject(dict) && dict.selected !== undefined && isString(dict.text)
-			&& keyCount(dict) === 2
-}
+function Registry(interfaceRole) {
+	var self = this
+	if (!interfaceRole) {
+		interfaceRole = "iface"
+		console.info("model.js Registry: No interfaceRole is given, so defaulting to \"iface\"")
+	}
 
-function normalizeStrings(isStringList) {
-	var ret = []
-	for (var i in isStringList) {
-		if (isStringList[i] !== undefined) {
-			if (isString(isStringList[i])) {
-				ret.push(isStringList[i])
-			} else {
-				ret.push(isStringList[i].text)
-			}
+	// Each element may have <interfaceRole>, name, and either source or component
+	// May also have optimizer, serializer, deserializer, serialDefaults, and deserialDefaults
+	this.interfaceList = [{}]
+	// interfaceRole is the name of this interface, and the property assigned a string interface identifier.
+	this.interfaceRole = interfaceRole
+	// string label -> index
+	this.labelMap = {}
+
+	// Interface 0 = None
+	this.interfaceList[0][interfaceRole] = ""
+	this.interfaceList[0].name = qsTr("None")
+
+	/* Helper functions */
+	this.indexOf = function (name) {
+		if (!name)
+			return 0
+		return self.labelMap[name.toLowerCase()]
+	}
+
+	this.interfaceOf = function (name) {
+		return self.interfaceList[self.indexOf(name)]
+	}
+
+	this.interfaceRoleOf = function (name) {
+		var iface = self.interfaceOf(name)
+		return iface ? iface[self.interfaceRole] : ""
+	}
+
+	this.nameOf = function (name) {
+		var iface = self.interfaceOf(name)
+		return iface ? iface.name : qsTr("None")
+	}
+
+	// Should have at least interfaceRole and name
+	this.setInterface = function (index, interfaceRoleId, name, extraArgs) {
+		var dict = { "name": name }
+		for (var i in extraArgs) {
+			dict[i] = extraArgs[i]
+		}
+		// identifiers show be lower case for quicker map search
+		dict[self.interfaceRole] = interfaceRoleId.toLowerCase()
+		self.interfaceList[index] = dict
+		self.setLabel(interfaceRoleId, index)
+	}
+
+	this.setLabel = function (label, index) {
+		self.labelMap[label.toLowerCase()] = index
+	}
+
+	this.optimizer = function (name) {
+		var iface = self.interfaceOf(name)
+		return iface ? iface.optimizer : null
+	}
+
+	this.setOptimizer = function (name, value) {
+		var iface = self.interfaceOf(name)
+		if (!iface)
+			throw "model.js Registry.setOptimizer: No interface is available for " + name
+		iface.optimizer = value
+	}
+
+	this.serializer = function (name) {
+		var iface = self.interfaceOf(name)
+		return iface ? iface.serializer : null
+	}
+
+	this.setSerializer = function (name, value) {
+		var iface = self.interfaceOf(name)
+		if (!iface)
+			throw "model.js Registry.setSerializer: No interface is available for " + name
+		iface.serializer = value
+	}
+
+	this.serialDefaults = function (name) {
+		var iface = self.interfaceOf(name)
+		return iface ? iface.serialDefaults : null
+	}
+
+	this.setSerialDefaults = function (name, value) {
+		var iface = self.interfaceOf(name)
+		if (!iface)
+			throw "model.js Registry.setSerialDefaults: No interface is available for " + name
+		iface.serialDefaults = value
+	}
+
+	this.deserialDefaults = function (name) {
+		var iface = self.interfaceOf(name)
+		return iface ? iface.deserialDefaults : null
+	}
+
+	this.setDeserialDefaults = function (name, value) {
+		var iface = self.interfaceOf(name)
+		if (!iface)
+			throw "model.js Registry.setDeserialDefaults: No interface is available for " + name
+		iface.deserialDefaults = value
+	}
+
+	this.deserializer = function (name) {
+		var iface = self.interfaceOf(name)
+		return iface ? iface.deserializer : null
+	}
+
+	this.setDeserializer = function (name, value) {
+		var iface = self.interfaceOf(name)
+		if (!iface)
+			throw "model.js Registry.setDeserializer: No interface is available for " + name
+		iface.deserializer = value
+	}
+
+	this.optimizeList = function (list) {
+		if (!list)
+			throw "model.js Registry.optimizeList: No list argument"
+		list.forEach(self.optimizeElement)
+	}
+
+	this.optimizeElement = function (element) {
+		var opt
+		if (element && (opt = self.optimizer(element[self.interfaceRole])))
+			opt(element)
+	}
+
+	this.serializeList = function (list) {
+		if (!list)
+			throw "model.js Registry.serializeList: No list argument"
+		list.forEach(self.serializeElement)
+	}
+
+	this.serializeElement = function (element) {
+		var ser, defKeys
+		if (element) {
+			if ((ser = self.serializer(element[self.interfaceRole])))
+				ser(element)
+			if ((defKeys = self.serialDefaults(element[self.interfaceRole])))
+				Extension.defaultKeys(element, defKeys)
 		}
 	}
-	return ret
-}
 
-function listStrings(stringList) {
-	var ret = []
-	for (var i in stringList) {
-		if (isString(stringList[i])) {
-			ret.push(new IsString(stringList[i]))
-		} else {
-			ret.push(stringList[i])
+	this.deserializeList = function (list) {
+		if (!list)
+			throw "model.js Registry.deserializeList: No list argument"
+		list.forEach(self.deserializeElement)
+	}
+
+	this.deserializeElement = function (element) {
+		var dessy, defKeys
+		if (element) {
+			if ((dessy = self.deserializer(element[self.interfaceRole])))
+				dessy(element)
+			if ((defKeys = self.deserialDefaults(element[self.interfaceRole])))
+				Extension.defaultKeys(element, defKeys)
 		}
 	}
-	return ret
-}
-
-function weekdays() {
-	return [qsTr("Sunday"), qsTr("Monday"), qsTr("Tuesday"), qsTr(
-				"Wednesday"), qsTr("Thursday"), qsTr("Friday"), qsTr(
-				"Saturday")]
-}
-
-function keyPressTypes() {
-	var ret = QLibmacro.applyTypeNames()
-	ret[MCR_SET] = qsTr("Press")
-	ret[MCR_UNSET] = qsTr("Release")
-	return ret
-}
-
-function applyTypes() {
-	return QLibmacro.applyTypeNames()
-}
-
-// TODO
-function triggerFlagNames() {
-	return [qsTr("None of"), qsTr("Some of"), qsTr("All of")]
-}
-
-// TODO
-function interruptTypes() {
-	var ret = []
-	ret[MCR_CONTINUE] = qsTr("Continue")
-	ret[MCR_PAUSE] = qsTr("Pause")
-	ret[MCR_INTERRUPT] = qsTr("Interrupt")
-	ret[MCR_INTERRUPT_ALL] = qsTr("Interrupt all")
-	ret[MCR_DISABLE] = qsTr("Disable")
-	return ret
-}
-
-var BS_UNMANAGED = 0
-var BS_NOTHING = 1
-var BS_EVERYTHING = 2
-var BS_BEGIN = 3
-var BS_FINAL = 4
-var BS_ALL = 5
-function blockingStyles() {
-	return [qsTr("Unmanaged"), qsTr("Nothing"), qsTr("Everything"), qsTr(
-				"Beginning"), qsTr("Final"), qsTr("All")]
 }

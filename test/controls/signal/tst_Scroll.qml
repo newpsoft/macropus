@@ -71,7 +71,7 @@ TestCase {
 		mouseClick(recorder)
 		wait(10) // Process open window
 		verify(recordWindow.visible)
-		recordWindow.close()
+		recordWindow.hide()
 	}
 
 	function fiddle() {

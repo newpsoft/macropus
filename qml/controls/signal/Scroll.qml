@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@ Item {
 		objectName: "recorder"
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: qsTr("Record")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Record a scrolling movement.")
 		onClicked: recordWindow.show()
 		ButtonStyle {}
@@ -114,9 +115,8 @@ Item {
 			/* TODO: No dispatcher for Scroll */
 			//		interceptISignal: "Scroll"
 			onTriggered: {
-				if (isIsignalValid(intercept) && Functions.strequal(
-							intercept.isignal, 'scroll')) {
-					Extension.copy(intercept, control.model)
+				if (isIsignalValid(intercept) && /^scroll$/i.exec(intercept.isignal)) {
+					Object.assign(control.model, intercept)
 					modelChanged()
 					close()
 				}

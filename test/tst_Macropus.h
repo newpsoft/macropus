@@ -10,10 +10,8 @@ class TstMacropus : public QObject
 {
 	Q_OBJECT
 public:
-	TstMacropus() : QObject(), _qlibmacroPt(nullptr)
-	{}
-	explicit TstMacropus(QObject *parent) : QObject(parent)
-	{}
+	TstMacropus();
+	explicit TstMacropus(QObject *parent);
 	virtual ~TstMacropus()
 	{
 		cleanupTestCase();

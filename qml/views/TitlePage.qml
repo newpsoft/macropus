@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -18,10 +18,12 @@
 
 import QtQuick 2.10
 import QtQuick.Controls 2.3
+import QtQuick.Controls.Material 2.3
 import "../settings"
 
 Page {
 	id: view
+	OpacityConstraint { target: background }
 
 	property bool showBackButtonFlag: false
 	signal backAction()
@@ -30,6 +32,15 @@ Page {
 		anchors.left: parent.left
 		anchors.right: parent.right
 		height: childrenRect.height
+		Rectangle {
+			id: titleBg
+			anchors.left: parent.left
+			anchors.right: parent.right
+			height: childrenRect.height
+			clip: true
+			color: Material.background
+			visible: Style.opacity === 1.0
+		}
 		Label {
 			anchors.horizontalCenter: parent.horizontalCenter
 			visible: !!text
@@ -50,9 +61,6 @@ Page {
 
 			icon.name: "undo-small"
 			text: "Alt + Left Arrow"
-			action: Action {
-				shortcut: "Alt+Left"
-			}
 
 			onClicked: view.backAction()
 

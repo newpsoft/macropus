@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
 */
 
 import QtQuick 2.10
-import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
 import "../settings"
 
@@ -32,42 +31,42 @@ Rectangle {
 	property int lineRadius: lineHeight / 2
 	property int gWidth: width * 0.62
 	property int lgWidth: gWidth * 0.62
-	property int lineHeight: height / 20
+	property int lineHeight: Style.tabRadius
 	Column {
 		anchors.centerIn: parent
-		spacing: view.lineHeight / 5
+		spacing: Style.tabRadius
 		opacity: 0.62
 		Rectangle {
 			width: view.gWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.background
+			color: Material.foreground
 		}
 		Rectangle {
 			anchors.horizontalCenter: parent.horizontalCenter
 			width: view.lgWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.background
+			color: Material.foreground
 		}
 		Rectangle {
 			width: view.gWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.background
+			color: Material.foreground
 		}
 		Rectangle {
 			anchors.horizontalCenter: parent.horizontalCenter
 			width: view.lgWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.background
+			color: Material.foreground
 		}
 		Rectangle {
 			width: view.gWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.background
+			color: Material.foreground
 		}
 	}
 }

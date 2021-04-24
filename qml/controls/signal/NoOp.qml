@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ Item {
 		SpinBox {
 			id: spinMsec
 			objectName: "msec"
-			to: 1000
+			to: 999
 			editable: true
 			Binding on value {
 				value: control.model && control.model.msec
@@ -60,7 +60,7 @@ Item {
 		}
 		SpinBox {
 			objectName: "sec"
-			to: 10000000
+			to: Vars.delaySecondsMaximum
 			editable: true
 			Binding on value {
 				value: control.model && control.model.sec

@@ -19,40 +19,59 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
 import "../settings"
-import "../vars.js" as Vars
+import "../views"
+import "../extension.js" as Extension
 import newpsoft.macropus 0.1
 
 Item {
-	implicitWidth: parent.width
-	implicitHeight: parent.height
+	id: control
 	property string title: qsTr("Summary")
-	property var model
-	property var fnApply: function (obj) {}
+	property QtObject model
 
-	/* JSON parser does not handle new lines */
-	TextArea {
-		id: editObj
+	signal applyAction()
 
-		anchors.centerIn: parent
-		width: parent.width * Vars.golden
-		height: parent.height * Vars.golden
-		focus: true
-		font: Util.fixedFont
-		wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-		enabled: !!model
-		onTextChanged: applyTimer.restart()
-		Binding on text {
-			value: model && JSON.stringify(model, null, '  ')
+	ScrollView {
+		id: scrollView
+		anchors.left: parent.left
+		anchors.right: parent.right
+		anchors.verticalCenter: parent.verticalCenter
+		contentWidth: width
+		contentHeight: editObj.height
+
+		states: State {
+			when: control.height < editObj.height
+			AnchorChanges {
+				target: scrollView
+				anchors.verticalCenter: undefined
+				anchors.top: scrollView.parent.top
+				anchors.bottom: scrollView.parent.bottom
+			}
+		}
+
+		/* JSON parser does not handle new lines */
+		TextArea {
+			id: editObj
+
+			WidthConstraint { target: editObj }
+
+			focus: true
+			wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+			enabled: !!model
+			onTextChanged: applyTimer.restart()
+			Binding on text {
+				value: model && JSON.stringify(model, Extension.modelJsonReplacer, "  ")
+			}
 		}
 	}
-	Timer {
+	OneShot {
 		id: applyTimer
-		interval: Vars.shortSecond
+
 		onTriggered: {
-			var mem = editObj.text
-			if ((mem = JSON.parse(mem))) {
-				model = mem
-				fnApply(model)
+			// TODO JSON parse error toast
+			try {
+				model = JSON.parse(editObj.text)
+				applyAction()
+			} catch (e) {
 			}
 		}
 	}

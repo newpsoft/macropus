@@ -151,11 +151,11 @@ Item {
 			text: qsTr("Select all")
 		}
 
-		DropList {
+		DropListForm {
 			id: dropList
 			model: view.model
 
-			contentItem: TextField {
+			contentComponent: TextField {
 				anchors.left: parent.left
 				anchors.right: parent.right
 				anchors.verticalCenter: parent.verticalCenter

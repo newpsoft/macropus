@@ -19,10 +19,11 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
-import QtQuick.Window 2.0
+import QtQuick.Window 2.2
 import "../settings"
 import "../views"
 import "."
+import "../extension.js" as Extension
 import "../functions.js" as Functions
 import "../model.js" as Model
 import newpsoft.macropus 0.1
@@ -32,34 +33,6 @@ ApplicationWindow {
 	id: control
 	title: qsTr("Macropus")
 
-	/* Always be at least a window */
-	flags: Qt.Window | onTopFlags | frameFlags | transparencyFlags | runFlags
-	color: hasTransparency ? "#00000000" : "#FF000000"
-
-	property bool frameMode: !WindowSettings.toolMode && WindowSettings.framed
-	property bool onTopMode: WindowSettings.toolMode || WindowSettings.alwaysOnTop
-	property bool hasTransparency: WindowSettings.toolMode || Util.isTranslucent(Material.background) || Style.opacity < 1.0
-	/* Always on top acts as frameless ToolTip.  Stay on top may require X11BypassWindowManagerHint. */
-	property int onTopFlags: onTopMode ? overlayFlags : 0
-	readonly property int overlayFlags: Qt.WindowStaysOnTopHint | Qt.X11BypassWindowManagerHint | Qt.FramelessWindowHint | Qt.Tool | Qt.ToolTip
-	/* If transparent or no frame, use frameless window. */
-	property int frameFlags: frameMode ? 0 : Qt.FramelessWindowHint
-	/* Transparency may require frameless window */
-	property int transparencyFlags: hasTransparency ? Qt.FramelessWindowHint | Qt.WA_TranslucentBackground : 0
-	/* While running macros from a button click we do not want to accept any input.
-	 * Note ShowWithoutActivating was not working properly, so we disable all input events. */
-	property int runFlags: 0
-
-
-	property bool applyModeMacros: false
-	onApplyModeMacrosChanged: {
-		if (applyModeMacros) {
-			apply()
-		} else {
-			QLibmacro.setMacros([])
-			macrosApplied()
-		}
-	}
 	property ListModel modeModel: ListModel {
 		ListElement {
 			selected: false
@@ -67,155 +40,72 @@ ApplicationWindow {
 		}
 		Component.onCompleted: clear()
 	}
-	property int currentModeIndex: -1
-	property int currentModeFlag: Functions.indexFlag(currentModeIndex)
-	property string currentMode: mode(currentModeIndex)
-	property bool isAllModeCurrent: currentModeIndex === -1
-	onCurrentModeFlagChanged: {
-		/* Changed to specific mode, anything not in mode is not visible and should deselect. */
-		if (!isAllModeCurrent) {
-			var i, mcr
-			for (i = 0; i < macroModel.count; i++) {
-				mcr = macro(i)
-				if (mcr.selected && !Functions.isFlagIndex(mcr.modes,
-														   currentModeFlag)) {
-					mcr.selected = false
-				}
-			}
-		}
-		if (applyModeMacros)
-		apply()
-	}
-	property bool isRunningMacro: false
-	/* Do not show window or accept input while run macro button has been pressed */
-	onIsRunningMacroChanged: {
-		if (isRunningMacro) {
-			runFlags = Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus | Qt.WA_ShowWithoutActivating
-			control.lower()
-		} else {
-			runFlags = 0
-			control.raise()
-			control.requestActivate()
-		}
-	}
+
 	property ListModel macroModel: ListModel {
+		// @disable-check M16
 		dynamicRoles: true
 	}
-
-	/* Title */
-	header: Item {
-		anchors.left: parent.left
-		anchors.right: parent.right
-		height: titleBar.height + Style.spacing * 2
-		visible: !frameMode || control.visibility === Window.FullScreen
-		MouseArea {
-			id: titleBar
-			anchors {
-				top: parent.top
-				left: parent.left
-				right: windowRow.left
-				leftMargin: windowRow.width + Style.spacing
-				topMargin: Style.spacing
-				rightMargin: Style.spacing
-			}
-			height: lblTitle.height
-			enabled: !frameMode
-					 && (control.visibility === Window.Windowed
-						 || control.visibility === Window.Maximized)
-			hoverEnabled: WindowSettings.toolTips
-
-			property point clickPos: Qt.point(1, 1)
-			onPressed: {
-				clickPos.x = mouseX
-				clickPos.y = mouseY
-				titleBg.color = Material.accent
-			}
-			onReleased: titleBg.color = Material.primary
-			onEntered: if (!pressed)
-						   titleBg.color = Material.accent
-			onExited: if (!pressed)
-						  titleBg.color = Material.primary
-			onPositionChanged: {
-				if (pressed) {
-					if (control.visibility === Window.Maximized) {
-						control.visibility = Window.AutomaticVisibility
-					} else {
-						control.x += mouseX - clickPos.x
-						control.y += mouseY - clickPos.y
-					}
-				}
-			}
-			Rectangle {
-				id: titleBg
-				opacity: 0.1
-				anchors.fill: parent
-				color: Material.primary
-				radius: height * Style.buttonRadius
-			}
-			Label {
-				id: lblTitle
-				anchors.horizontalCenter: parent.horizontalCenter
-				font.pointSize: Style.h2
-				font.bold: true
-				text: title
-				color: titleBar.pressed ? Material.background : Material.accent
-			}
-		}
-		Row {
-			id: windowRow
-			anchors.right: parent.right
-			anchors.margins: Style.spacing
-			height: parent.height
-			spacing: Style.spacing
-			RoundButton {
-				width: parent.height
-				height: width
-				onClicked: swapVisibility(control, Window.Minimized)
-				icon.name: "bottom"
-				action: Action {
-					shortcut: "F9"
-				}
-				ButtonStyle {
-					widthBinding.when: false
-				}
-			}
-			RoundButton {
-				width: parent.height
-				height: width
-				onClicked: swapVisibility(control, Window.Maximized)
-				icon.name: control.visibility === Window.Windowed ? "up" : "window"
-				action: Action {
-					shortcut: "F10"
-				}
-				ButtonStyle {
-					widthBinding.when: false
-				}
-			}
-			RoundButton {
-				width: parent.height
-				height: width
-				onClicked: control.close()
-				icon.name: "kill"
-				action: Action {
-					shortcut: "Alt+F4"
-				}
-				ButtonStyle {
-					widthBinding.when: false
-				}
-			}
-		}
+	property ListModel macroCopyContainer: ListModel {
+		// @disable-check M16
+		dynamicRoles: true
 	}
-	/* Full screen action has no button */
-	Action {
-		shortcut: "F11"
-		onTriggered: swapVisibility(control, Window.FullScreen)
+	property ListModel signalCopyContainer: ListModel {
+		// @disable-check M16
+		dynamicRoles: true
 	}
+	property ListModel triggerCopyContainer: ListModel {
+		// @disable-check M16
+		dynamicRoles: true
+	}
+	property ListModel textCopyContainer: ListModel {
+		ListElement {
+			selected: false
+			text: ""
+		}
+		Component.onCompleted: clear()
+	}
+
+	property bool applyModeMacros: false
+	onApplyModeMacrosChanged: applyModeMacrosTimer.restart()
+	property int currentModeIndex: -1
+	property int currentModeFlag: Functions.indexFlag(currentModeIndex)
+	onCurrentModeFlagChanged: currentModeFlagTimer.restart()
+
+	signal clearEditor()
+	onClearEditor: editPage.clearEditor()
+
+	signal macrosApplied()
+	onMacrosApplied: recordHotkeyDialog.macrosApplied()
+
+	function doAction(actionName) {
+		/* If the currently visible page has this action, trigger this
+		   page's action. */
+		if (tabView.currentItem[actionName])
+			tabView.currentItem[actionName]()
+	}
+	/* File ops */
+	onNewFile: macroFile.setMacroDocument({})
+	onSave: macroFile.save()
+	onSaveAs: macroFile.saveAs()
+	onRefresh: macroFile.refresh()
+	onOpen: macroFile.open()
+	/* Edit ops */
+	onCut: doAction("cutAction")
+	onCopy: doAction("copyAction")
+	onPaste: doAction("pasteAction")
+	onApplyAction: doAction("applyAction")
+	onBackAction: doAction("backAction")
+	onAddAction: doAction("addAction")
+	onRemoveAction: doAction("removeAction")
+	onSelectAllAction: doAction("selectAllAction")
+	/* Display page */
+	onSettings: tabBar.currentIndex = 3
+	onAbout: doAction("aboutAction") // TODO popup
 
 	footer: TabBar {
 		id: tabBar
-		Binding on currentIndex {
-			value: tabView.currentIndex
-		}
+		OpacityConstraint { target: tabBar.background }
+		Binding on currentIndex { value: tabView.currentIndex }
 		property var labels: [qsTr("<u>E</u>dit"), qsTr("<u>R</u>un"),
 		qsTr("<u>L</u>ayout"), qsTr("<u>S</u>ettings")]
 		property var actions: ["Alt+E", "Alt+R", "Alt+L", "Alt+S"]
@@ -224,9 +114,7 @@ ApplicationWindow {
 			TabButton {
 				text: modelData
 				onClicked: tabBar.currentIndex = index
-				action: Action {
-					shortcut: tabBar.actions[index]
-				}
+				action: Action { shortcut: tabBar.actions[index] }
 			}
 		}
 	}
@@ -234,190 +122,107 @@ ApplicationWindow {
 	SwipeView {
 		id: tabView
 		anchors.fill: parent
-		Binding on currentIndex {
-			value: tabBar.currentIndex
+
+		Binding on currentIndex { value: tabBar.currentIndex }
+		EditPage {
+			id: editPage
+			Binding on applyModeMacros { value: control.applyModeMacros }
+			onApplyModeMacrosChanged: control.applyModeMacros = applyModeMacros
+			Binding on currentModeIndex { value: control.currentModeIndex }
+			onCurrentModeIndexChanged: control.currentModeIndex = currentModeIndex
+
+			macroModel: control.macroModel
+			modeModel: control.modeModel
+			macroCopyContainer: control.macroCopyContainer
+			signalCopyContainer: control.signalCopyContainer
+			triggerCopyContainer: control.triggerCopyContainer
+			textCopyContainer: control.textCopyContainer
 		}
 		TitlePage {
-			id: editTab
-			title: qsTr("Edit Macros")
-
-			showBackButtonFlag: editStack.count > 1
-			onBackAction: {
-				if (editStack.count > 1)
-					editStack.removeItem(editStack.currentItem)
-			}
-			SwipeView {
-				id: editStack
-				anchors.fill: parent
-				anchors.leftMargin: Style.spacing
-				anchors.rightMargin: Style.spacing
-				onCurrentItemChanged: editTab.isCurrentItem
-									  && currentItem.title ? currentItem.title : qsTr(
-																 "Edit")
-				interactive: false
-				clip: true
-
-				EditMacros {
-					property bool applyModeMacros: false
-					property bool isCurrentItem: SwipeView.isCurrentItem
-					currentModeIndex: control.currentModeIndex
-					onCurrentModeIndexChanged: control.currentModeIndex = currentModeIndex
-					onReapplyMode: control.applyModeMacrosChanged()
-					modeModel: control.modeModel
-					onIsCurrentItemChanged: {
-						/* Editing contents of macros requires removing all
-						 * active macros. */
-						if (isCurrentItem) {
-							control.applyModeMacros = applyModeMacros
-						} else {
-							applyModeMacros = control.applyModeMacros
-							if (control.applyModeMacros)
-								control.applyModeMacros = false
-						}
-					}
-				}
-			}
-		}
-		TitlePage {
+			id: runTab
 			title: qsTr("Run macros")
 
+			property alias cutAction: runMacrosPage.cutAction
+			property alias copyAction: runMacrosPage.copyAction
+			property alias pasteAction: runMacrosPage.pasteAction
+			property alias addAction: runMacrosPage.addAction
+			property alias removeAction: runMacrosPage.removeAction
+			property alias selectAllAction: runMacrosPage.selectAllAction
 			RunMacros {
+				id: runMacrosPage
 				anchors.fill: parent
 				anchors.leftMargin: Style.spacing
 				anchors.rightMargin: Style.spacing
+
+				modeModel: control.modeModel
+				macroModel: control.macroModel
+				// Has own mode index.
 			}
 		}
 		TitlePage {
+			id: layoutTab
 			title: qsTr("Layout")
-			showBackButtonFlag: layoutPage.showBackButton
+
+			property alias cutAction: layoutPage.cutAction
+			property alias copyAction: layoutPage.copyAction
+			property alias pasteAction: layoutPage.pasteAction
+			property alias addAction: layoutPage.addAction
+			property alias removeAction: layoutPage.removeAction
+			property alias selectAllAction: layoutPage.selectAllAction
 			Layout {
 				id: layoutPage
 				anchors.fill: parent
 				anchors.leftMargin: Style.spacing
 				anchors.rightMargin: Style.spacing
+
+				copyContainer: textCopyContainer
+				model: control.modeModel
 			}
 		}
 		SettingsPage {
-			id: settingsPage
-		}
-	}
-
-	PhaseTrigger {
-		enabled: LibmacroSettings.enableMacroRecorder
-		phaseCount: 3
-		phaserKey: LibmacroSettings.recordMacroKey
-		phaserModifiers: LibmacroSettings.recordMacroModifiers
-		phaserTriggerFlags: MCR_TF_ALL
-		/* Inject intervals only for signals */
-		injectIntervals: LibmacroSettings.recordTimeInterval && phase === 2
-
-		property var macro: new Model.Macro(qsTr("Recorded"))
-		property var stages: []
-		onCompleted: {
-			applyStages(macro, stages)
-			macro.modes = control.currentModeFlag
-			prependMacro(macro)
-			/* Reset vars, phase number resets itself */
-			macro = new Model.Macro(qsTr("Recorded"))
-			stages = []
-		}
-		onTriggered: {
-			/* 1: record trigger
-			 * 2: record macro
-			 */
-			/* Phaser key is ignored and will not trigger. */
-			/* Names are resolved before triggering. */
-			switch (phase) {
-			case 1:
-				/* Trigger ignores modifier key presses.  Modifiers are
-				 * recorded for all regular keys press, and not individually. */
-				/* Apply type is ignored; only record key presses. */
-				if (SignalFunctions.keyMod(intercept.key)
-						|| intercept.applyType !== MCR_SET) {
-					return
-				}
-				/* Fix case sensitivity */
-				if (intercept.isignal)
-					intercept.isignal = intercept.isignal.toLowerCase()
-				stages.push(new Model.Stage(intercept, modifiers))
-				break
-			case 2:
-				/* Fix case sensitivity */
-				if (intercept.isignal)
-					intercept.isignal = intercept.isignal.toLowerCase()
-				/* TODO: optional trigger hotkeys with recorded macros. */
-				intercept.dispatch = false
-				/* NoOp intervals may be injected. */
-				macro.signals.push(intercept)
-				break
+			id: settingsTab
+			textCopyContainer: control.textCopyContainer
+			onShowInfo: {
+				messageDialog.title = title
+				messageDialog.message(text)
 			}
 		}
 	}
 
-	PhaseTrigger {
-		enabled: LibmacroSettings.enableMacroRecorder
-		phaseCount: 4
-		phaserKey: LibmacroSettings.recordNamedMacroKey
-		phaserModifiers: LibmacroSettings.recordNamedMacroModifiers
-		phaserTriggerFlags: MCR_TF_ALL
-		/* Inject intervals only for signals */
-		injectIntervals: LibmacroSettings.recordTimeInterval && phase === 3
+	RecordHotkeyDialog {
+		id: recordHotkeyDialog
 
-		property var macro: new Model.Macro(qsTr("Recorded"))
-		property string name: ""
-		property var stages: []
-		onCompleted: {
-			applyStages(macro, stages)
-			macro.name = name
-			macro.modes = control.currentModeFlag
-			prependMacro(macro)
-			/* Reset vars, phase number resets itself */
-			macro = new Model.Macro(qsTr("Recorded"))
-			name = ""
-			stages = []
-		}
-		onTriggered: {
-			/* 1: record macro name
-			 * 2: record trigger
-			 * 3: record macro
-			 */
-			/* Phaser key is ignored and will not trigger. */
-			/* Names are resolved before triggering. */
-			switch (phase) {
-			case 1:
-				if (intercept.key && intercept.applyType === MCR_SET) {
-					var letter = SignalFunctions.keyName(intercept.key)
-					var isShift = !!(modifiers & MCR_SHIFT)
-					if (letter && letter.length === 1) {
-						name += isShift ? letter.toUpperCase(
-											  ) : letter.toLowerCase()
-					} else if (intercept.key === SignalFunctions.key("Space")) {
-						name += " "
-					}
+		property bool recoverActive: false
+		property int restoreVisibility: 0
+
+		onRecordingInProgressChanged: {
+			if (recordingInProgress) {
+				/* Blocking macros interferes with recording. */
+				QLibmacro.setMacros([])
+				restoreVisibility = control.visibility
+				if ((recoverActive = control.active))
+					control.hide()
+			} else {
+				if (recoverActive) {
+					recoverActive = false
+					control.show()
+					control.raise()
+					control.requestActivate()
 				}
-				break
-			case 2:
-				/* Trigger ignores modifier key presses.  Modifiers are
-				 * recorded for all regular keys press, and not individually. */
-				/* Apply type is ignored; only record key presses. */
-				if (SignalFunctions.keyMod(intercept.key)
-						|| intercept.applyType !== MCR_SET) {
-					return
-				}
-				/* Fix case sensitivity */
-				if (intercept.isignal)
-					intercept.isignal = intercept.isignal.toLowerCase()
-				stages.push(new Model.Stage(intercept, modifiers))
-				break
-			case 3:
-				/* Fix case sensitivity */
-				if (intercept.isignal)
-					intercept.isignal = intercept.isignal.toLowerCase()
-				/* TODO: optional trigger hotkeys with recorded macros. */
-				intercept.dispatch = false
-				macro.signals.push(intercept)
-				break
+				control.visibility = restoreVisibility
+				applyModeMacrosTimer.restart()
 			}
+		}
+		onRecordingCompleted: {
+			// Apply macros after the new macro is added
+			applyModeMacrosTimer.stop()
+			macro.modes = currentModeFlag
+			if (LibmacroSettings.recordUniqueFlag) {
+				replaceHotkey(macro)
+			} else {
+				prependMacro(macro)
+			}
+			applyModeMacrosTimer.restart()
 		}
 	}
 
@@ -428,100 +233,81 @@ ApplicationWindow {
 		Item {
 			width: 0
 			height: 0
-			QTrigger {
+			Trigger {
 				id: switchModeTrigger
-				qlibmacro: QLibmacro
+				enableIntercept: LibmacroSettings.enableSwitchModeFlag
 				modifiers: LibmacroSettings.switchModeModifiers
 				triggerFlags: MCR_TF_ALL
-				Component.onCompleted: setDispatch()
 				readonly property int myKey: SignalFunctions.key("" + index)
-				property Connections connectMacrosApplied: Connections {
-					target: control
-					onMacrosApplied: switchModeTrigger.setDispatch()
-				}
+				intercept: { "isignal": "Key", "key": myKey, "applyType": MCR_SET }
 				onTriggered: {
 					if (control.modeModel.count >= index)
 						control.currentModeIndex = index - 1
 				}
-				function setDispatch() {
-					var siggy = {
-						isignal: "Key",
-						key: myKey,
-						applyType: MCR_SET
-					}
-					addDispatch(siggy)
-				}
+				Component.onCompleted: control.macrosApplied.connect(macrosApplied)
 			}
 		}
 	}
 
-	/* List shortcuts */
-	Action {
-		shortcut: "Alt++"
-		onTriggered: tabView.currentItem.addAction && tabView.currentItem.addAction()
-	}
-	Action {
-		shortcut: "Alt+="
-		onTriggered: tabView.currentItem.addAction()
-	}
-	Action {
-		shortcut: "Alt+-"
-		onTriggered: tabView.currentItem.removeAction()
-	}
-	Action {
-		shortcut: "Alt+A"
-		onTriggered: tabView.currentItem.selectAllAction()
-	}
-	Action {
-		shortcut: "Ctrl+A"
-		onTriggered: tabView.currentItem.selectAllAction()
+	MacroFile {
+		id: macroFile
+
+		onError: control.error(errorString)
+
+		macroModel: control.macroModel
+		modeModel: control.modeModel
+		Binding on applyModeMacros {
+			value: control.applyModeMacros
+		}
+		onApplyModeMacrosChanged: control.applyModeMacros = applyModeMacros
+		Binding on currentModeIndex {
+			value: control.currentModeIndex
+		}
+		onCurrentModeIndexChanged: control.currentModeIndex = currentModeIndex
+
+		onRefresh: clearEditor()
+		onOpen: clearEditor()
 	}
 
-	/* Some main window shortcuts */
-	Action {
-		shortcut: "Ctrl+S"
-		onTriggered: dialogs.file.save()
-	}
-	Action {
-		shortcut: "F3"
-		onTriggered: dialogs.file.save()
-	}
-	Action {
-		shortcut: "Ctrl+D"
-		onTriggered: dialogs.file.saveAs()
-	}
-	Action {
-		shortcut: "F4"
-		onTriggered: dialogs.file.saveAs()
-	}
-	Action {
-		shortcut: "Ctrl+R"
-		onTriggered: dialogs.file.refresh()
-	}
-	Action {
-		shortcut: "F5"
-		onTriggered: dialogs.file.refresh()
-	}
-	Action {
-		shortcut: "Ctrl+O"
-		onTriggered: dialogs.file.load()
-	}
-	Action {
-		shortcut: "Ctrl+L"
-		onTriggered: dialogs.file.load()
-	}
-	Action {
-		shortcut: "F6"
-		onTriggered: dialogs.file.load()
-	}
+	OneShot {
+		id: applyModeMacrosTimer
 
-	function swapVisibility(window, visibility) {
-		if (window) {
-			if (window.visibility === visibility) {
-				window.visibility = Window.AutomaticVisibility
+		onTriggered: {
+			if (applyModeMacros) {
+				apply()
 			} else {
-				window.visibility = visibility
+				QLibmacro.setMacros([])
+				macrosApplied()
 			}
+		}
+	}
+
+	OneShot {
+		id: currentModeFlagTimer
+
+		onTriggered: {
+			/* Changed to specific mode, anything not in mode is not visible and should deselect. */
+			if (currentModeIndex !== -1) {
+				var i, mcr
+				for (i = 0; i < macroModel.count; i++) {
+					mcr = macroModel.get(i)
+					if (mcr.selected && !Functions.isFlagIndex(mcr.modes,
+															   currentModeIndex)) {
+						mcr.selected = false
+					}
+				}
+			}
+			if (applyModeMacros)
+				apply()
+		}
+	}
+
+	function apply() {
+		try {
+			QLibmacro.setMacros(macrosInMode(currentModeIndex))
+			macrosApplied()
+		} catch (e) {
+			error(qsTr("Error applying macros") + "\n" + e)
 		}
 	}
 
@@ -550,19 +336,90 @@ ApplicationWindow {
 		}
 	}
 
-	function prependMacro(macro) {
-		macroModel.insert(0, macro)
-		if (applyModeMacros)
-			QLibmacro.addMacro(macro)
+	function clearDocument() {
+		currentModeIndex = -1
+		modeModel.clear()
+		macroModel.clear()
+	}
+
+	function macrosInMode(modeIndex) {
+		if (modeIndex === -1) {
+			return macroFile.optimizeMacros()
+		} else if (modeIndex === undefined) {
+			modeIndex = currentModeIndex
+		}
+		var flag = Functions.indexFlag(modeIndex), obj
+		return macroFile.optimizeMacros().filter(element => Boolean(flag & element.modes))
 	}
 
 	function mode(index) {
+		if (index === undefined)
+			index = currentModeIndex
 		if (index >= modeModel.count)
 			throw "EINVAL"
-		if (index === undefined)
-			return mode(currentModeIndex)
 		if (index === -1)
 			return "All"
 		return modeModel.get(index).text
+	}
+
+	function moveToMode(index, modeIndex) {
+		var mcr = macroModel.get(index)
+		if (mcr)
+			mcr.modes = Functions.indexFlag(modeIndex)
+	}
+
+	function prependMacro(macro) {
+		macroModel.insert(0, macro)
+	}
+
+	function replaceHotkey(macro) {
+		var i, j, m, l, r, id
+		var hasit = false
+		var activator = macro.activators[0]
+		var trigger = macro.triggers[0]
+		for (i = 0; i < macroModel.count; i++) {
+			m = macroModel.get(i)
+			/* Not in current mode */
+			if (!(m.modes & control.currentModeFlag))
+				continue
+
+			id = SignalFunctions.id(activator.isignal)
+			for (j = 0; j < m.activators.count; j++) {
+				l = m.activators.get(j)
+				/* Found key? */
+				if (SignalFunctions.id(l.isignal) === id) {
+					if (l.key === activator.key && l.applyType === activator.applyType) {
+						hasit = true
+						break
+					}
+				}
+			}
+
+			if (!hasit)
+				break
+			hasit = false
+
+			id = TriggerFunctions.id(trigger.itrigger)
+			for (j = 0; j < m.triggers.count; j++) {
+				l = m.triggers.get(j)
+				/* Found action? */
+				if (TriggerFunctions.id(l.itrigger) === id) {
+					if (l.modifiers === trigger.modifiers &&
+							l.triggerFlags === trigger.triggerFlags) {
+						hasit = true
+						break
+					}
+				}
+			}
+
+			/* A complete matching hotkey was found.  Replace the previous macro */
+			if (hasit) {
+				macroModel.set(i, macro)
+				return
+			}
+		}
+		/* A matching hotkey was not found */
+		if (!hasit)
+			prependMacro(macro)
 	}
 }

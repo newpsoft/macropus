@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ Item {
 	property alias widthBinding: widthBinding
 	property color buttonColor: Material.primary
 	property int display: Button.TextUnderIcon
-	//	property color iconColor: Material.accent
 	// Javascript function, button sizes should not change.
 	property int radius: Math.min(parent.width,
 								  parent.height) * Style.buttonRadius
@@ -51,12 +50,6 @@ Item {
 		}
 	}
 
-	// TODO: palette not working?
-	//	Binding {
-	//		target: parent.palette
-	//		property: "button"
-	//		value: buttonColor
-	//	}
 	Binding {
 		target: bgColorChild
 		property: "color"
@@ -64,21 +57,14 @@ Item {
 	}
 	Binding {
 		target: parent
+		when: parent.display !== undefined
 		property: "display"
 		value: display
 	}
 	Binding {
 		target: parent
+		when: parent.radius !== undefined
 		property: "radius"
 		value: radius
 	}
-
-	//	function parentIconColor() {
-	//		if (parent && parent.icon !== undefined
-	//				&& parent.icon.color !== undefined) {
-	//			parent.icon.color = Qt.binding(function () {
-	//				return iconColor
-	//			})
-	//		}
-	//	}
 }

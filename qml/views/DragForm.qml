@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -17,14 +17,14 @@
 */
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import "../settings"
 
 Item {
 	id: view
-	implicitHeight: childrenRect.height
+	implicitHeight: contentItem.implicitHeight
 
 	property bool selected: false
+	property Item overlay
 
 	property alias indicator: indicator
 	property alias dragBox: dragBox
@@ -38,7 +38,7 @@ Item {
 		when: view.Drag.active
 		ParentChange {
 			target: view
-			parent: null
+			parent: overlay
 		}
 		AnchorChanges {
 			target: view
@@ -52,6 +52,8 @@ Item {
 		PropertyChanges {
 			target: view
 			width: Style.tileWidth
+			implicitHeight: Style.buttonWidth
+			clip: true
 		}
 		PropertyChanges {
 			target: view
@@ -75,7 +77,7 @@ Item {
 		anchors.bottom: parent.bottom
 		width: Style.buttonWidth
 		drag.target: view
-		hoverEnabled: WindowSettings.toolTips
+		hoverEnabled: WindowSettings.enableToolTips
 		onReleased: {
 			if (drag.active)
 				view.Drag.drop()
@@ -92,14 +94,5 @@ Item {
 		anchors.leftMargin: Style.spacing
 		anchors.right: parent.right
 		implicitHeight: childrenRect.height
-
-		/* Min size */
-		states: State {
-			when: contentItem.childrenRect.height < Style.buttonWidth
-			PropertyChanges {
-				target: contentItem
-				implicitHeight: Style.buttonWidth
-			}
-		}
 	}
 }

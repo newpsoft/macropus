@@ -16,6 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "util.h"
 
 //#include <chrono>
@@ -211,7 +213,7 @@ QByteArray Util::loadFile(const QString &fileName, const QByteArray &pass)
 
 QByteArray Util::reloadFile()
 {
-	return loadFile(applicationFile(), _applicationSS.text().c_str());
+	return loadFile(applicationFile(), _applicationSS.text().string());
 }
 
 QByteArray Util::decrypt(const QByteArray &dataBytes, const QByteArray &pass)
@@ -232,7 +234,7 @@ QByteArray Util::decrypt(const QByteArray &dataBytes, const QByteArray &pass)
 										MCR_AES_IV_SIZE), dataBytes.length() - MCR_AES_IV_SIZE,
 										reinterpret_cast<const unsigned char *>(passHolder.constData()),
 										reinterpret_cast<const unsigned char *>(dataBytes.constData()),
-										nullptr).c_str();
+										nullptr).string();
 	} catch (int errNo) {
 		emit error(errStd(errNo));
 	}
@@ -299,7 +301,7 @@ void Util::saveFile(const QString &fileName, const QByteArray &text,
 
 void Util::resaveFile(const QByteArray &text)
 {
-	saveFile(applicationFile(), text, _applicationSS.text().c_str());
+	saveFile(applicationFile(), text, _applicationSS.text().string());
 }
 
 //QString Util::loadMacroFile(const QUrl &fileUrl,

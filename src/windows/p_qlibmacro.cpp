@@ -42,10 +42,10 @@ void QLibmacro::setInterceptEnabledImpl(bool bVal)
 	mcr::Libmacro *ctx = mcr::Libmacro::instance();
 	if (bVal) {
 		if (_interceptList.contains("kbd", Qt::CaseInsensitive))
-			mcr_intercept_key_set_enabled(ctx->ptr(), true);
+			mcr_intercept_key_set_enabled(&**ctx, true);
 		if (_interceptList.contains("mouse", Qt::CaseInsensitive))
-			mcr_intercept_move_set_enabled(ctx->ptr(), true);
+			mcr_intercept_mouse_set_enabled(&**ctx, true);
 	} else {
-		mcr_intercept_set_enabled(ctx->ptr(), false);
+		mcr_intercept_set_enabled(&**ctx, false);
 	}
 }

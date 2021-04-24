@@ -30,7 +30,7 @@ Flow {
 	onModelChanged: updateList()
 	property bool inProgress: false
 
-	property QtObject modeModel
+	property ListModel modeModel
 
 	signal selectAllAction()
 	onSelectAllAction: chkAll.checked = !chkAll.checked

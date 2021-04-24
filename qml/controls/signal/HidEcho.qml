@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -32,10 +32,10 @@ Column {
 		objectName: "recorder"
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: qsTr("Record")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Record a button click.")
 		onClicked: recordWindow.show()
-		ButtonStyle {
-		}
+		ButtonStyle {}
 	}
 	ComboBox {
 		id: cmbEcho
@@ -46,13 +46,13 @@ Column {
 		Binding on currentIndex {
 			value: control.model && control.model.echo
 		}
-		onCurrentIndexChanged: {
+		onActivated: {
 			if (control.model)
-				control.model.echo = currentIndex
+				control.model.echo = index
 		}
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Echo code")
-		ComboBoxStyle {
-		}
+		ComboBoxStyle {}
 	}
 	RecordOneWindow {
 		id: recordWindow
@@ -62,8 +62,8 @@ Column {
 		//		interceptISignal: "HidEcho"
 		onTriggered: {
 			if (isIsignalValid(intercept) && isEcho(intercept.isignal)) {
-				SignalPages.deserializeHidEcho(intercept)
-				Extension.copy(intercept, control.model)
+				SignalSerial.deserializeHidEcho(intercept)
+				Object.assign(control.model, intercept)
 				close()
 			}
 		}

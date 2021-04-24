@@ -19,252 +19,190 @@ import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
 import "../settings"
+import "../views"
 import "../functions.js" as Functions
 import "../model.js" as Model
 import "../list_util.js" as ListUtil
-import "../vars.js" as Vars
 import newpsoft.macropus 0.1
 
-Item {
+Page {
 	id: control
-	property string title: qsTr("Run macros")
+	title: qsTr("Run macros")
+	background: null
 
-	property alias currentModeIndex: tabBar.currentModeIndex
-//	property alias currentModeFlag: tabBar.currentModeFlag
-//	property alias currentMode: tabBar.currentMode
-//	property alias isAllModeCurrent: tabBar.isAllModeCurrent
+	property alias modeBar: modeBar
+	property alias currentModeIndex: modeBar.currentModeIndex
+	property bool isAllModeCurrent: currentModeIndex === -1
 	onCurrentModeIndexChanged: {
 		/* Changed to specific mode, anything not in mode is not visible and should deselect. */
-		if (!isAllModeCurrent && model) {
+		if (currentModeIndex !== -1 && macroModel) {
 			var i, obj
-			for (i = 0; i < model.count; i++) {
-				obj = repeatMacros.itemAt(i)
-				if (obj.checked && !obj.isToShow)
-					obj.checked = false
+			for (i = 0; i < macroModel.count; i++) {
+				obj = dropList.dropList.itemAt(i)
+				if (obj.selected && !obj.isToShow)
+					obj.selected = false
 			}
 		}
 	}
+	property alias modeModel: modeBar.model
 
-	property QtObject model
-	property QtObject modeModel
+	property alias toolBar: toolBar
+	property alias chkSelectAll: toolBar.chkSelectAll
+	property alias chkSelectAllChecked: toolBar.chkSelectAllChecked
 
+	property alias copyContainer: dropList.copyContainer
+	property alias cloneElement: dropList.cloneElement
+	property alias macroModel: dropList.model
+	property alias selectAll: dropList.selectAll
+	Binding on selectAll {
+		value: chkSelectAllChecked
+	}
+	Binding on chkSelectAllChecked {
+		value: selectAll
+	}
+
+	/* Public list action interface */
+	property alias addAction: dropList.addAction
+	property alias removeAction: dropList.removeAction
+	property alias cutAction: dropList.cutAction
+	property alias copyAction: dropList.copyAction
+	property alias pasteAction: dropList.pasteAction
+	property alias selectAllAction: dropList.selectAllAction
+
+	signal reapplyMode
 	signal runMacros(var macroList)
-	signal selectAllAction
-	onSelectAllAction: chkSelectAll.checked = !chkSelectAll.checked
 
 	Connections {
 		target: modeModel
-		onRowsInserted: currentModeIndex = -1
-		onRowsMoved: currentModeIndex = -1
-		onRowsRemoved: currentModeIndex = -1
+		function onRowsInserted() {
+			currentModeIndex = -1
+		}
+		function onRowsMoved() {
+			currentModeIndex = -1
+		}
+		function onRowsRemoved() {
+			currentModeIndex = -1
+		}
 	}
 
-	ModeTabs {
-		id: tabBar
-		anchors.horizontalCenter: parent.horizontalCenter
-	}
-	Row {
-		id: toAll
-		anchors {
-			top: tabBar.bottom
-			left: parent.left
-			right: parent.right
-			topMargin: Style.spacing
+	header: ExpandableHeader {
+		id: expandableHeader
+		anchors.left: parent.left
+		anchors.right: parent.right
+
+		Binding on expanded {
+			value: WindowSettings.expandHeader
 		}
-		CheckBox {
-			id: chkSelectAll
-			text: qsTr("Select <u>a</u>ll")
-			onCheckedChanged: {
-				if (!model)
-					return
-				var i, obj
-				for (i = 0; i < model.count; i++) {
-					obj = repeatMacros.itemAt(i)
-					if (obj.isToShow)
-						obj.checked = checked
+		onExpandedChanged: WindowSettings.expandHeader = expanded
+
+		/* Under-clip to not see ListView below mode tabs. */
+		Rectangle {
+			anchors.fill: headerContent
+			clip: true
+			color: Material.background
+			visible: Style.opacity === 1.0
+		}
+
+		Column {
+			id: headerContent
+			anchors.left: parent.left
+			anchors.right: parent.right
+			anchors.rightMargin: Style.buttonWidth
+			ModeTabs {
+				id: modeBar
+				anchors.left: parent.left
+				anchors.right: parent.right
+				onDropToAll: dropToFlag(drop, -1)
+				onDropTo: dropToFlag(drop, Functions.indexFlag(index))
+				onReapply: control.reapplyMode()
+
+				function dropToFlag(drop, modeFlag) {
+					if (drop && drop.keys.includes("application/macro")) {
+						/* TODO: RunMacros page assumes drop macros come from macroModel */
+						ListUtil.selection(macroModel, dropList.dropList.itemAt)
+						.forEach(element => element.modes = modeFlag)
+					}
 				}
 			}
-		}
-		RoundButton {
-			id: btnRunAll
-			//			primary: Material.accent
-			ToolTip.text: qsTr("Run selected macros, one at a time.")
-			icon.name: "player_play"
-			onClicked: {
-				if (!model)
-					return
-				var ret = []
-				/* Assume if selected it is also visible. */
-				for (var i = 0; i < model.count; i++) {
-					if (repeatMacros.itemAt(i).checked)
-						ret.push(model.get(i))
+			RunActionBar {
+				id: toolBar
+				anchors.left: parent.left
+				anchors.right: parent.right
+
+				onAdd: addAction()
+				onRemove: removeAction()
+				onCut: cutAction()
+				onCopy: copyAction()
+				onPaste: pasteAction()
+
+				onChkSelectAllCheckedChanged: {
+					if (!macroModel)
+						return
+					var i, obj
+					for (i = 0; i < macroModel.count; i++) {
+						obj = dropList.dropList.itemAt(i)
+						if (obj.contentLoaderItem.isToShow)
+							obj.selected = selectAll
+					}
 				}
-				runMacros(ret)
+				onRun: {
+					if (!macroModel)
+						return
+					var ret = []
+					/* Assume if selected it is also visible. */
+					for (var i = 0; i < macroModel.count; i++) {
+						if (dropList.dropList.itemAt(i).selected)
+							ret.push(macroModel.get(i))
+					}
+					runMacros(ret)
+				}
 			}
 		}
 	}
 
 	ScrollView {
-		id: scrollView
-		anchors {
-			top: toAll.bottom
-			topMargin: Style.spacing
-			bottom: parent.bottom
-		}
-		width: parent.width
-		Flow {
-			id: flow
-			width: scrollView.width
-			spacing: Style.spacing
-			move: Transition {
-				NumberAnimation {
-					properties: "x,y"
-					easing.type: Easing.OutQuad
-				}
+		anchors.fill: parent
+		anchors.topMargin: Style.spacing
+		contentWidth: width
+
+		DropListFlow {
+			id: dropList
+			WidthConstraint { target: dropList }
+
+			dragKeys: ["application/macro"]
+
+			Binding {
+				target: dropList.dropList
+				property: "modelSelectModeFlag"
+				value: false
 			}
-			Repeater {
-				id: repeatMacros
-				model: control.model
-				Item {
-					id: itemRoot
-					objectName: "itemRoot"
-					implicitWidth: isToShow ? item.width : 1
-					height: isToShow ? item.height : 1
-					property var itemModel: model
-					property int itemIndex: index
-					property bool isToShow: control.isAllModeCurrent
-											|| Functions.isFlagIndex(
-												model.modes,
-												control.currentModeIndex)
-					property alias checked: chkSelected.checked
 
-					property var dropIndices: []
-					Item {
-						id: item
-						visible: itemRoot.isToShow
-						width: childrenRect.width
-						height: childrenRect.height
-						Drag.active: dragBox.drag.active
-						Drag.keys: ["macros"]
-						Drag.hotSpot.x: dragBox.mouseX
-						Drag.hotSpot.y: dragBox.mouseY
-						Drag.source: itemRoot
-						states: State {
-							when: item.Drag.active
-							ParentChange {
-								target: item
-								parent: control
-							}
-							PropertyChanges {
-								target: chkSelected
-								explicit: true
-								restoreEntryValues: false
-								checked: true
-							}
-						}
+			cloneElement: new Model.Macro()
+			contentComponent: RunMacroForm {
+				property Item greaterParent: Functions.ancestor(parent, "itemRoot")
+				property bool isToShow: model && (control.isAllModeCurrent
+												  || Functions.isFlagIndex(
+													  model.modes,
+													  control.currentModeIndex))
 
-						Rectangle {
-							id: dragRect
-							width: Style.buttonWidth * Vars.golden
-							height: Style.buttonWidth
-							color: chkSelected.checked ? Material.accent : Material.primary
-							radius: width * Style.buttonRadius
-							CheckBox {
-								id: chkSelected
-								width: Style.buttonWidth * Vars.lGolden
-								//								checkWidth: width
-								anchors.verticalCenter: parent.verticalCenter
-								anchors.horizontalCenter: parent.horizontalCenter
-							}
-							MouseArea {
-								id: dragBox
-								anchors.fill: parent
-								drag.target: item
-								hoverEnabled: WindowSettings.toolTips
-								onClicked: chkSelected.checked = !chkSelected.checked
-								onReleased: {
-									if (drag.active && control.model) {
-										itemRoot.dropIndices = []
-										for (var i = 0; i < control.model.count; i++) {
-											if (repeatMacros.itemAt(i).checked)
-												itemRoot.dropIndices.push(i)
-										}
-										item.Drag.drop()
-									}
-								}
-								ToolTip.text: qsTr("Select macro and drag from here")
-								ToolTip.visible: (dragBox.hoverEnabled
-												  && dragBox.containsMouse
-												  && !chkSelected.hovered)
-							}
-						}
-						RoundButton {
-							id: btnRun
-							anchors {
-								left: dragRect.right
-								margins: Style.spacing
-							}
-							icon.source: model && model.image ? model.image : ""
-							//							accent: Material.primary
-							//							primary: Material.accent
-							icon.name: "player_play"
-							onClicked: runMacros([control.model.get(index)])
-						}
-						Label {
-							anchors {
-								top: btnRun.bottom
-								topMargin: Style.spacing
-								left: dragRect.left
-								right: btnRun.right
-							}
-							width: parent.width
-							font: Util.fixedFont
-							Binding on text {
-								value: model && model.name
-							}
-						}
-					}
-					DropArea {
-						width: parent.width / 2
-						height: parent.height
-						onDropped: moveTo(index)
-						Rectangle {
-							width: Style.spacing
-							height: parent.height
-							color: Material.accent
-							radius: width * Style.buttonRadius
-							visible: parent.containsDrag
-						}
-					}
-					DropArea {
-						x: parent.width / 2
-						width: parent.width / 2
-						height: parent.height
-						onDropped: moveTo(index)
-						Rectangle {
-							anchors.right: parent.right
-							width: Style.spacing
-							height: parent.height
-							color: Material.accent
-							radius: width * Style.buttonRadius
-							visible: parent.containsDrag
-						}
-					}
+				anchors.left: parent.left
+				anchors.right: parent.right
+
+				Binding {
+					target: greaterParent
+					property: "visible"
+					value: isToShow
+				}
+
+				onRun: runMacros([dropList.model.get(index)])
+
+				Binding on image {
+					value: model && model.image ? model.image : ""
+				}
+				Binding on name {
+					value: model && model.name ? model.name : ""
 				}
 			}
 		}
-	}
-
-	function moveTo(index) {
-		if (!model)
-			return
-		var mem = []
-		for (var i = 0; i < model.count; i++) {
-			mem.push(model.get(i).selected)
-			model.setProperty(i, 'selected',
-										   repeatMacros.itemAt(i).checked)
-		}
-		ListUtil.moveSelected(model, index)
-		ListUtil.setSelection(model, mem)
 	}
 }

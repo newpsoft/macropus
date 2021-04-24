@@ -19,96 +19,97 @@
 import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
-import QtQuick.Window 2.0
+import QtQuick.Window 2.2
 import "../settings"
-import "../vars.js" as Vars
+import "../views"
+import "../functions.js" as Functions
 
-Window {
+ApplicationWindow {
 	id: view
-    title: qsTr("Confirm file password")
-	x: geometry.x
-	y: geometry.y
-	width: geometry.width
-	height: geometry.height
+	title: qsTr("Confirm file password")
 
-    property string fileName
+	property string fileName
 	property bool showPass: false
-    signal accepted(string pass)
-	onAccepted: close()
-    signal rejected
-	onRejected: close()
+	signal accepted(string pass)
+	signal rejected
+	property var onAcceptedFn
 
-    flags: Qt.Tool
-    visible: false
+	flags: Qt.Tool
 
-    Rectangle {
-        z: 0
-        anchors.fill: parent
-        color: Material.background
-        border.color: Material.accent
-        border.width: 2
-    }
+	onAccepted: {
+		if (onAcceptedFn) {
+			onAcceptedFn(pass)
+			onAcceptedFn = null
+		}
+		close()
+	}
+	onRejected: {
+		onAcceptedFn = null
+		close()
+	}
 
-    Column {
-        id: colContent
-        x: Style.spacing / 2
-        y: Style.spacing / 2
-        width: parent.width - Style.spacing
-        spacing: Style.spacing
+	Column {
+		id: colContent
+		x: Style.tabRadius
+		y: Style.tabRadius
+		width: parent.width - Style.spacing
+		spacing: Style.spacing
 		Keys.onEnterPressed: accept()
 		Keys.onReturnPressed: accept()
 		Keys.onEscapePressed: reject()
 		Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("File to save/load:")
-        }
+			anchors.horizontalCenter: parent.horizontalCenter
+			text: qsTr("File to save/load:")
+		}
 		Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-			text: view.fileName
-        }
-        TextField {
-            id: editPass
-            width: parent.width
-            placeholderText: qsTr("Enter Password")
-            echoMode: chkShowPass.checked ? TextInput.PasswordEchoOnEdit : TextInput.Password
-            inputMethodHints: chkShowPass.checked ? Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText : Qt.ImhHiddenText | Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
+			anchors.horizontalCenter: parent.horizontalCenter
+			text: Functions.toLocalFile(view.fileName)
+		}
+		TextField {
+			id: editPass
+			width: parent.width
+			placeholderText: qsTr("Enter Password")
+			echoMode: chkShowPass.checked ? TextInput.PasswordEchoOnEdit : TextInput.Password
+			inputMethodHints: chkShowPass.checked ? Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText : Qt.ImhHiddenText | Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
 			Keys.onEnterPressed: accept()
 			Keys.onReturnPressed: accept()
 			Keys.onEscapePressed: reject()
-        }
+		}
 		CheckBox {
 			id: chkShowPass
 			text: qsTr("Show passowrd")
 			checked: view.showPass
 			onCheckedChanged: view.showPass = checked
 		}
-        Row {
-            anchors.right: parent.right
-            spacing: Style.spacing
-            RoundButton {
-                text: qsTr("OK")
+		Row {
+			anchors.right: parent.right
+			spacing: Style.spacing
+			RoundButton {
+				text: qsTr("OK")
 				onClicked: accept()
-            }
-            RoundButton {
-                text: qsTr("Cancel")
+				ButtonStyle {}
+			}
+			RoundButton {
+				text: qsTr("Cancel")
 				onClicked: reject()
-            }
-        }
-        Item {
-            width: 1
-            height: 1
-        }
-    }
+				ButtonStyle {}
+			}
+		}
+		Item {
+			width: 1
+			height: 1
+		}
+	}
 
-    Timer {
+	Timer {
 		interval: Vars.shortSecond
-        onTriggered: {
+		onTriggered: {
 			view.requestActivate()
-            editPass.forceActiveFocus()
-        }
-        repeat: false
+			editPass.forceActiveFocus()
+		}
+		repeat: false
 		running: view.visible
-    }
+	}
 
 	Geometry {
 		id: geometry
@@ -116,19 +117,24 @@ Window {
 		window: view
 	}
 
-    function open(strFileName) {
-        if (strFileName)
-            fileName = strFileName;
-        if (!visible)
-            show()
-    }
+	function open(strFileName) {
+		if (strFileName)
+			fileName = strFileName;
+		if (!visible)
+			show()
+	}
 
 	function accept() {
-        accepted(editPass.text)
-        editPass.text = ""
-    }
+		accepted(editPass.text)
+		editPass.text = ""
+	}
 
 	function reject() {
-        rejected()
-    }
+		rejected()
+	}
+
+	function request(fileName, callback) {
+		onAcceptedFn = callback
+		open(fileName)
+	}
 }

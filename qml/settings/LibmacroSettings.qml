@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -20,87 +20,90 @@ pragma Singleton
 import QtQuick 2.10
 import Qt.labs.settings 1.0
 import "../functions.js" as Functions
-import "../vars.js" as Vars
 import newpsoft.macropus 0.1
 
 QtObject {
 	/* Intercept */
-	property alias blockable: settings.blockable
-	property alias customIntercept: settings.customIntercept
+	property alias blockableFlag: settings.blockableFlag
+	property alias customInterceptFlag: settings.customInterceptFlag
 	property var customInterceptList: JSON.parse(settings.customInterceptList)
-	property alias interceptEnabled: settings.interceptEnabled
+	property alias enableInterceptFlag: settings.enableInterceptFlag
 
 	/* Macro */
 	property alias macroFile: settings.macroFile
-	property alias enableMacroRecorder: settings.enableMacroRecorder
-	property alias recordTimeInterval: settings.recordTimeInterval
-	property alias recordTimeConstant: settings.recordTimeConstant
-	property alias timeConstant: settings.timeConstant
+	property alias enableMacroRecorderFlag: settings.enableMacroRecorderFlag
+	property alias recordConvertAbsoluteFlag: settings.recordConvertAbsoluteFlag
+	property alias recordTimeIntervalFlag: settings.recordTimeIntervalFlag
+	property alias recordTimeConstantFlag: settings.recordTimeConstantFlag
+	property alias recordUniqueFlag: settings.recordUniqueFlag
+	property alias timeConstantValue: settings.timeConstantValue
 	property alias recordMacroKey: settings.recordMacroKey
 	property alias recordMacroModifiers: settings.recordMacroModifiers
 	property alias recordNamedMacroKey: settings.recordNamedMacroKey
 	property alias recordNamedMacroModifiers: settings.recordNamedMacroModifiers
 
 	/* Mode */
+	property alias enableSwitchModeFlag: settings.enableSwitchModeFlag
 	property alias switchModeModifiers: settings.switchModeModifiers
 
-	onBlockableChanged: {
-		if (QLibmacro.blockable !== blockable)
-			QLibmacro.blockable = blockable
+	onBlockableFlagChanged: {
+		if (QLibmacro.blockable !== blockableFlag)
+			QLibmacro.blockable = blockableFlag
 	}
-	onCustomInterceptChanged: QLibmacro.interceptList
-							  = (customIntercept ? customInterceptList : QLibmacro.autoIntercepts(
-													   ))
+	onCustomInterceptFlagChanged: QLibmacro.interceptList
+								  = customInterceptFlag ? customInterceptList : QLibmacro.autoIntercepts()
 	onCustomInterceptListChanged: updateCustomInterceptList()
-	onInterceptEnabledChanged: if (QLibmacro.interceptEnabled !== interceptEnabled)
-	QLibmacro.interceptEnabled = interceptEnabled
+	onEnableInterceptFlagChanged: {
+		if (QLibmacro.interceptEnabled !== enableInterceptFlag)
+			QLibmacro.interceptEnabled = enableInterceptFlag
+	}
 
 	property Settings settings: Settings {
 		id: settings
 		category: "Libmacro"
 		/* Intercept */
-		property bool blockable: false
-		property bool customIntercept: false
+		property bool blockableFlag: false
+		property bool customInterceptFlag: false
 		property string customInterceptList: "[]"
-		property bool interceptEnabled: false
+		property bool enableInterceptFlag: false
 
 		/* Macro */
 		property string macroFile: ""
-		property bool enableMacroRecorder: true
-		property bool recordTimeInterval: true
-		property bool recordTimeConstant: false
-		property int timeConstant: Vars.shortSecond
+		property bool enableMacroRecorderFlag: true
+		property bool recordConvertAbsoluteFlag: true
+		property bool recordTimeIntervalFlag: true
+		property bool recordTimeConstantFlag: false
+		property bool recordUniqueFlag: false
+		property int timeConstantValue: Vars.shortSecond
 		property int recordMacroKey: SignalFunctions.key("`")
 		property int recordMacroModifiers: 0
 		property int recordNamedMacroKey: SignalFunctions.key("`")
 		property int recordNamedMacroModifiers: MCR_SHIFT
 
 		/* Mode */
+		property bool enableSwitchModeFlag: true
 		property int switchModeModifiers: MCR_SHIFT | MCR_CTRL
 	}
 
 	property Binding bindApplicationFile: Binding {
 		target: Util
 		property: 'applicationFile'
-		value: Functions.toLocalFile(macroFile)
+		value: macroFile && Functions.toLocalFile(macroFile)
 	}
 
 	property Binding bindBlockable: Binding {
 		target: QLibmacro
 		property: "blockable"
-		value: blockable
+		value: blockableFlag
 	}
 
 	property Timer saveInterceptTimer: Timer {
 		interval: 3000
-		onTriggered: {
-			settings.customInterceptList = JSON.stringify(customInterceptList,
-														  null, ' ')
-		}
+		onTriggered: settings.customInterceptList = JSON.stringify(customInterceptList)
 	}
 
 	function updateCustomInterceptList() {
-		if (customIntercept)
+		if (customInterceptFlag)
 			QLibmacro.interceptList = customInterceptList
 		saveInterceptTimer.restart()
 	}
@@ -114,9 +117,9 @@ QtObject {
 		if (!--internal.count) {
 			if (saveInterceptTimer.running) {
 				saveInterceptTimer.stop()
-				settings.customInterceptList = JSON.stringify(
-							customInterceptList, null, ' ')
+				settings.customInterceptList = JSON.stringify(customInterceptList)
 			}
+			console.log("Deinitializing Libmacro");
 			QLibmacro.deinitialize()
 		}
 	}

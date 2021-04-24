@@ -20,160 +20,159 @@
 
 // Query type or element //
 function isArray(obj) {
-	return obj !== undefined && (typeof obj === "array" || obj instanceof Array)
+	return obj !== undefined && obj instanceof Array
+}
+
+function isFunction(obj) {
+	return obj !== undefined && obj instanceof Function
 }
 
 function isObject(obj) {
-	return obj !== undefined && !isArray(obj) && (typeof obj === "object"
-												  || obj instanceof Object)
+	return obj !== undefined && obj instanceof Object
+}
+
+function isObjectExplicit(obj) {
+	return isObject(obj) && !isArray(obj) && !isFunction(obj) && !isString(obj)
+}
+
+function isRecursiveObject(obj) {
+	return (isArray(obj) || isObject(obj)) && !isFunction(obj) && !isString(obj)
+}
+
+function isModel(obj) {
+	/* obj is an object, count is a number, and get is a function */
+	return isObject(obj) && !isNaN(obj.count) && isFunction(obj.get)
 }
 
 function isString(obj) {
 	return obj !== undefined && (typeof obj === "string"
 								 || obj instanceof String)
 }
-/// Filter "objectName" properties, defaulted to undefined
-function validElement(dict, key) {
-	return key === "objectName" ? undefined : dict && dict[key]
+
+// A text object properties are... textProps
+// may convert { text object } => text
+function isTextObject(obj) {
+	const textProps = ["text", "objectName", "selected"]
+	if (isObject(obj) && isString(obj.text)) {
+		for (var i in obj) {
+			if (!textProps.includes(i))
+				return false
+		}
+		return true
+	}
+	return false
 }
 
-// Dictionary //
-function keys(dict) {
-	var ret = []
-	for (var i in dict) {
-		if (dict[i] !== undefined && i !== "objectName")
-			ret.push(i)
-	}
-	return ret
+// may convert list of [ text ] => list of [ { text object } ]
+function isStringSet(arr) {
+	/* We do not know if an empty array is a list of strings. */
+	if (!isArray(arr))
+		return false
+	return arr.every(element => isString(element))
 }
 
-function keyCount(dict) {
-	var ret = 0
-	for (var i in dict) {
-		if (dict[i] !== undefined && i !== "objectName")
-			++ret
+/// Filter "objectName" properties and function values, defaulted to undefined
+function validElement(key, value) {
+	return key === "objectName" || isFunction(value) ? undefined : value
+}
+
+function replaceElement(key, value, replacer) {
+	if (validElement(key, value) === undefined)
+		return undefined
+	if (!replacer)
+		return value
+	if (isFunction(replacer)) {
+		return replacer(key, value)
+	} else if (isArray(replacer) && replacer.includes(key)) {
+		return value
 	}
-	return ret
+	return undefined
+}
+
+function indexArray(length) {
+	var i = 0
+	return Array.from({'length': length}, () => i++)
 }
 
 /*! If a key is not set in dict, set to default value in keyPairs. */
 function defaultKeys(dict, keyPairs) {
 	for (var i in keyPairs) {
-		if (dict[i] === undefined && i !== "objectName")
+		if (validElement(i, dict[i]) === undefined)
 			dict[i] = keyPairs[i]
 	}
+	return dict
 }
 
-function replace(dict, oldProp, newProp, value) {
-	if (dict && value !== undefined) {
-		dict[newProp] = value
-		dict[oldProp] = undefined
+/// Deep copy with optional replacer(key, value)
+function createAndCopy(copytron, replacer, skipThisReplacer) {
+	var ret, obj
+	if (replacer && !skipThisReplacer)
+		copytron = replacer("", copytron)
+	if (!isRecursiveObject(copytron))
+		return copytron
+	if (isArray(copytron)) {
+		ret = []
+	} else {
+		ret = {}
 	}
+	for (var i in copytron) {
+		/* Consumer has a chance to replace with a NEW different thing
+		 * before we copy it. */
+		if ((obj = replaceElement(i, copytron[i], replacer)) !== undefined)
+			ret[i] = createAndCopy(obj, replacer, true)
+	}
+	return ret
 }
 
-// Duplicate //
-function copy(copytron, container) {
+function deepReplace(dict, replacer) {
 	var obj
-	if (!container)
-		throw "copy: Output container is not provided"
-	for (var i in copytron) {
-		if ((obj = validElement(copytron, i)) !== undefined)
-			container[i] = obj
+	if (!isRecursiveObject(dict))
+		return dict
+	for (var i in dict) {
+		if ((obj = replaceElement(i, dict[i], replacer)) !== undefined)
+			dict[i] = deepReplace(dict[i], replacer)
 	}
-	return container
-}
-
-function createAndCopy(copytron) {
-	var obj, ret = isArray(copytron) ? [] : {}
-	if (copytron === undefined)
-		return ret
-	return copy(copytron, ret)
-}
-
-function deepCopy(copytron) {
-	var obj, ret = isArray(copytron) ? [] : {}
-	if (copytron === undefined)
-		return ret
-	for (var i in copytron) {
-		if ((obj = validElement(copytron, i)) !== undefined) {
-			if (isArray(obj) || isObject(obj)) {
-				ret[i] = deepCopy(obj)
-			} else {
-				ret[i] = obj
-			}
-		}
-	}
-	return ret
-}
-
-// array => array modified //
-function copyArray(array, modifierFunction) {
-	var ret = [], obj, cpy
-	for (var i in array) {
-		obj = array[i]
-		if (obj) {
-			cpy = createAndCopy(obj)
-			if (modifierFunction)
-				modifierFunction(cpy)
-			ret.push(cpy)
-		}
-	}
-	return ret
-}
-
-// array => model //
-function arrayToModel(array, propertyName) {
-	var ret = []
-	for (var i in array) {
-		ret.push({})
-		if (propertyName) {
-			ret[i][propertyName] = array[i]
-		} else {
-			ret[i].value = array[i]
-		}
-	}
-	return ret
-}
-
-/* If roleName is given, each element will be set to that role in the model */
-function copyToModel(array, model, roleName) {
-	var obj, element
-	model.clear()
-	for (var i in array) {
-		obj = element = validElement(array, i)
-		if (roleName)
-			obj[roleName] = element
-		model.set(i, obj ? obj : {})
-	}
+	return dict
 }
 
 // model => array //
 /* If roleName is given, that role of each element will be pushed into the
  * new array instead of each element. */
 function modelToArray(model, roleName) {
-	if (model === undefined)
+	if (!model)
 		return []
-	var i, ret = [], iter
-	for (i = 0; i < model.count; i++) {
-		iter = model.get(i)
-		if (roleName)
-			iter = iter[roleName]
-		ret.push(iter)
-	}
-	return ret
+	var ret = indexArray(model.count).map(element => model.get(element))
+	return roleName ? ret.map(element => element[roleName]) : ret
 }
 
-function copyModel(model, modifierFunction) {
-	var ret = [], obj, cpy
-	for (var i = 0; i < model.count; i++) {
-		obj = model.get(i)
-		if (obj) {
-			cpy = createAndCopy(obj)
-			if (modifierFunction)
-				modifierFunction(cpy)
-			cpy.selected = undefined
-			ret.push(cpy)
-		}
+/// Use with JSON.stringify
+function modelJsonReplacer(key, value) {
+	if (key === "objectName" || key === "selected")
+		return undefined
+	if (isObject(value)) {
+		if (isModel(value))
+			return modelToArray(value)
+		if (isTextObject(value))
+			return value.text
 	}
-	return ret
+	return value
+}
+
+/* Replace models with arrays.  Do not replace text objects. */
+function innerModelReplacer(key, value) {
+	if (key === "objectName")
+		return undefined
+	return isModel(value) ? modelToArray(value) : value
+}
+
+/// Use on a parsed array AFTER JSON.parse
+function arrayToModelReplacer(key, value) {
+	if (isStringSet(value))
+		return value.map(element => ({"text": element}))
+	return value
+}
+
+/// Specifically take strings and convert to text objects
+function stringSetReplacer(array) {
+	return arrayToModelReplacer(null, array)
 }

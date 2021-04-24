@@ -58,7 +58,7 @@ TestCase {
 		compare(hidEcho.model.echo, undefined)
 
 		// Initialize properties
-		echo.currentIndexChanged()
+		echo.activated(echo.currentIndex)
 		expectModel()
 
 		fiddle()
@@ -69,7 +69,7 @@ TestCase {
 		mouseClick(recorder)
 		wait(10) // Process open window
 		verify(recordWindow.visible)
-		recordWindow.close()
+		recordWindow.hide()
 	}
 
 	function fiddle() {

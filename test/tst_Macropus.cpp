@@ -5,18 +5,42 @@
 #include "util.h"
 #include "qlibmacro.h"
 #include "qtrigger.h"
+#include "qclipboardproxy.h"
 
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QQuickWindow>
 #include <QtQuickTest/quicktest.h>
 
-void TstMacropus::applicationAvailable()
+TstMacropus::TstMacropus() : QObject(), _qlibmacroPt(nullptr)
 {
 #if QT_VERSION > 0x050501
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
+	/* Automated test may be headless, so default to nogpu */
+#ifndef MCR_TEST_GPU
+	QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
+#endif
+}
+
+TstMacropus::TstMacropus(QObject *parent) : QObject(parent), _qlibmacroPt(nullptr)
+{
+#if QT_VERSION > 0x050501
+	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+	/* Automated test may be headless, so default to nogpu */
+#ifndef MCR_TEST_GPU
+	QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
+#endif
+}
+
+void TstMacropus::applicationAvailable()
+{
 	applicationSetup();
 	/* QML register types cannot be separated into a function */
+	qmlRegisterSingletonType<QClipboardProxy>(MACROPUS_PLUGIN_NAME, MACROPUS_PLUGIN_VERSION,
+								   "Clipboard",
+								   qmlClipboardProvider);
 	qmlRegisterSingletonType<FileUtil>(MACROPUS_PLUGIN_NAME, MACROPUS_PLUGIN_VERSION,
 									   "FileUtil",
 									   qmlFileUtilProvider);

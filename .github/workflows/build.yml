@@ -1,0 +1,44 @@
+name: CI
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.1.0
+
+    - name: Checkout submodules
+      uses: textbook/git-checkout-submodule-action@master
+
+    - name: Lib deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev libx11-xcb-dev libglu1-mesa-dev libxkbcommon-x11-0
+
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: ${{ runner.os }}-QtCache
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+        version: 5.14.2
+        host: linux
+        target: desktop
+
+    - name: CMake Build
+      run: |
+        git fetch origin master
+        cmake -B build -DBUILD_DOC=OFF -DBUILD_PACKAGE=OFF -DBUILD_SHARED_LIBS=ON -DBUILD_SIGNED=OFF -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release .
+        cmake --build build --target tst_Macropus
+
+    - name: tst_Macropus
+      run: build/tst_Macropus -platform offscreen
+

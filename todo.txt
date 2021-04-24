@@ -1,9 +1,17 @@
+Recorder:
+ record unique
+
+Bug: Triggered macro signals are blocked by other another macro's hotkey.
+Signal to trigger other macro (by mode and name)
+Signal to paste to Clipboard
+All enumerations that get serialized provide both translated label and serializable "name" that is always English.
+Unify keyNames of standard keys accross platforms.
+Option to automatically complete macro recording with long pause.
 Headless mode loads only one file, may prompt for password.
 
 Offer option to exit when load file fails?
 Array-based modes? Needs in-memory macro mode list to be reference to mode object. Saved file mode list is still a list of strings.
-  look at: MacroList, Layout, MacroSettings, MainWindow, ModeList, ModeTabs, RunMacros, SelectorWindow, LibmacroSettings?
-  checked: EditMacros, Globals
+  look at: Layout, MacroSettings, MainWindow, ModeList, ModeTabs, RunMacros, SelectorWindow, LibmacroSettings?
 Data model for macro list?
 Make recorder context-sensitive.  Any list recorder should not interfere with user actions.  May be purposeful user actions.  Main window should not accept input while recording.
 Flag-enumerations in-memory as integer, save as array of named enumeration
@@ -17,6 +25,9 @@ Change macro recorder options to floating button or something that can be access
 launch option: Add option for external main qml file to load (with the benefits of our libraries).
 
 WorkerScript and loading circle when applying macros, load/save file
+
+Can optimize RAM by making non-visible windows created objects at runtime.
+ ApplicationWindow.window.myDialogVariable = this/null on open/close
 
 Macro algorithm:
  Fix concurrency and reduce usage of mutices.
@@ -60,10 +71,6 @@ Settings
  add mode switch hotkeys.  Modifier set + 0-9
  add macro recorder option to include time intervals (default true)
  add hotkey to open and raise main window
-
-Macro recorder
- Add time intervals
- Setting for recorded time interval, constant time interval, or no recorded intervals.
 
 Libmacro
  Move name => integer maps from C to C++ std::map

@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ import QtQuick.Controls 2.3
 import "../../settings"
 import ".."
 import "../../views"
-import "../../functions.js" as Functions
 import "../../model.js" as Model
 
 Column {
@@ -41,6 +40,7 @@ Column {
 				objectName: "current"
 				anchors.horizontalCenter: parent.horizontalCenter
 				text: qsTr("Current")
+				ToolTip.delay: Vars.shortSecond
 				ToolTip.text: qsTr("Set modifiers from current value.")
 				onClicked: checkboxes.set(QLibmacro.modifiers())
 				ButtonStyle {}
@@ -82,7 +82,7 @@ Column {
 				FlagChecks {
 					id: flagsRepeater
 					objectName: "triggerFlags"
-					model: [qsTr("All")].concat(Model.triggerFlagNames())
+					model: [qsTr("All")].concat(Vars.triggerFlagNames)
 					Binding on flags {
 						value: control.model && control.model.triggerFlags
 					}

@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -28,16 +28,16 @@ QtObject {
 	property alias fontSize: settings.fontSize
 	property alias spacing: settings.spacing
 	property alias buttonWidth: settings.buttonWidth
-	property alias tabRadius: settings.tabRadius
-	property alias tileWidth: settings.tileWidth
-	property alias pageWidth: settings.pageWidth
-	property int windowWidth: pageWidth * 1.5
 	property alias buttonRadius: settings.buttonRadius
 	property alias opacity: settings.opacity
 
 	// TODO Move to globals?
-	property int h1: fontSize * 1.32
-	property int h2: fontSize * 1.68
+	property int h1: fontSize * 1.68
+	property int h2: fontSize * 1.32
+	property int tabRadius: spacing / 2
+	// Magic spacers = 3 tiles / page
+	property real tileWidth: (pageWidth - spacing * 2) / 3
+	property real pageWidth: buttonWidth * 20
 
 	property Binding bindFontSize: Binding {
 		target: Util
@@ -63,17 +63,11 @@ QtObject {
 		property string iconTheme: "BlueSphere"
 		property int fontSize: Qt.application.font.pointSize
 		property int spacing: Functions.multiplyOrConstant(Qt.application.font,
-														   'pixelSize', .5, 7)
+														   'pixelSize', .75, 6)
 		property int buttonWidth: Functions.multiplyOrConstant(
-									  Qt.application.font, 'pixelSize', 3.6, 32)
-		property int tabRadius: Functions.multiplyOrConstant(
-									Qt.application.font, 'pixelSize', 0.32, 3)
-		property int tileWidth: Functions.multiplyOrConstant(
-									Qt.application.font, 'pixelSize', 32, 400)
-		property int pageWidth: Functions.multiplyOrConstant(
-									Qt.application.font, 'pixelSize', 64, 800)
-		property double buttonRadius: 0.5 * 0.61803
-		property double opacity: 1.0
+									  Qt.application.font, 'pixelSize', 4.4, 35)
+		property real buttonRadius: 0.5 * 0.618
+		property real opacity: 1.0
 		onOpacityChanged: {
 			if (opacity > 1.0) {
 				opacity = 1.0

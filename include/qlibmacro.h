@@ -98,28 +98,23 @@ public:
 	Q_INVOKABLE QStringList applyTypeNames() const;
 	Q_INVOKABLE inline unsigned int modifiers() const
 	{
-		return *mcr_modifiers(_context->ptr());
+		return *mcr_modifiers(&**_context);
 	}
 	Q_INVOKABLE inline void setModifiers(unsigned int value)
 	{
-		*mcr_modifiers(_context->ptr()) = value;
+		*mcr_modifiers(&**_context) = value;
 	}
-	Q_INVOKABLE inline QVariantList cursorPosition()
-	{
-		mcr_SpacePosition pos = {0};
-		mcr_cursor_position(pos);
-		return QVariantList() << pos[0] << pos[1] << pos[2];
-	}
+	Q_INVOKABLE QPoint cursorPosition();
 
 	inline bool isBlockable() const
 	{
-		return mcr_intercept_is_blockable(context()->ptr());
+		return mcr_intercept_blockable(&**_context);
 	}
 	void setBlockable(bool bVal);
 
 	inline bool isInterceptEnabled() const
 	{
-		return mcr_intercept_is_enabled(context()->ptr());
+		return mcr_intercept_enabled(&**_context);
 	}
 	void setInterceptEnabled(bool bVal);
 
@@ -167,8 +162,8 @@ private:
 	void setActivators(mcr::Macro *macroPt, const QVariantList &activators);
 	void setTriggers(mcr::Macro *macroPt, const QVariantList &triggers);
 
-	void fill(mcr::SignalRef &sigRef, const QVariantMap &values);
-	void fill(mcr::TriggerRef &trigRef, const QVariantMap &values);
+	void fill(mcr::SignalBuilder &sigRef, const QVariantMap &values);
+	void fill(mcr::TriggerBuilder &trigRef, const QVariantMap &values);
 
 	/* platform */
 	void setInterceptFilter();

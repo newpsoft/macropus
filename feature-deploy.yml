@@ -1,0 +1,62 @@
+name: CI
+on:
+  pull_request:
+    types: [ closed ]
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged
+    steps:
+    - uses: actions/checkout@v2.1.0
+
+    - name: Checkout submodules
+      uses: textbook/git-checkout-submodule-action@master
+
+    - name: Lib deps
+      run: |
+        apt-get update
+        apt-get install -y libssl-dev libglu1-mesa-dev
+
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v1
+      with:
+        path: ../Qt
+        key: ${{ runner.os }}-QtCache
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+        version: 5.14.2
+        host: linux
+        target: desktop
+
+    - name: Cache AppImage
+      id: cache-app-image
+      uses: actions/cache@v1
+      with:
+        path: ../AppImage
+        key: ${{ runner.os }}-AppImageCache
+
+    - name: Get AppImage
+      if: steps.cache-app-image.outputs.cache-hit != 'true'
+      run: |
+        apt-get update
+        apt-get install -y wget
+        wget https://github.com/TheAssassin/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy*.AppImage
+
+    - name: CMake Build
+      run: |
+        cmake -B bin -DBUILD_DOC=OFF -DBUILD_PACKAGE=ON -DBUILD_SHARED_LIBS=ON -DBUILD_SIGNED=OFF -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release .
+        cmake --build bin --target Macropus
+
+    - name: Build AppImage
+      working-directory: bin
+      run: |
+        ./linuxdeploy*.AppImage --appimage-extract-and-run --appdir AppDir/ --output appimage --desktop-file AppDir/usr/share/applications/openrct2.desktop
+        mkdir artifacts
+        mv OpenRCT2*.AppImage artifacts

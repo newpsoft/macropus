@@ -2,7 +2,6 @@ import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtTest 1.0
 import "../../../qml/controls/trigger"
-import "../../functions.js" as Functions
 
 TestCase {
 	name: "Staged"
@@ -15,12 +14,10 @@ TestCase {
 	ListModel {
 		id: listModel
 		ListElement {
-			modifiers: 0
-			triggerFlags: 0
+			blockStyle: -1
 		}
 		ListElement {
-			modifiers: 1
-			triggerFlags: 1
+			blockStyle: 0
 		}
 	}
 	ListModel {
@@ -28,9 +25,8 @@ TestCase {
 		dynamicRoles: true
 	}
 
-	property var current: findChild(staged, "current")
-	property var modifiers: findChild(staged, "modifiers")
-	property var triggerFlags: findChild(staged, "triggerFlags")
+	property var blockStyle: findChild(staged, "blockStyle")
+	property var stages: findChild(staged, "stages")
 	// TODO Args dialog
 	function initTestCase() {
 		dynamicListModel.append({
@@ -51,12 +47,10 @@ TestCase {
 
 	function test_dynamicModel() {
 		staged.model = dynamicListModel.get(0)
-		compare(staged.model.modifiers, undefined)
-		compare(staged.model.triggerFlags, undefined)
+		compare(staged.model.blockStyle, undefined)
+		compare(staged.model.stages, undefined)
 
 		// Initialize properties
-		modifiers.modifiersChanged()
-		triggerFlags.flagsChanged()
 		expectModel()
 
 		fiddleModel()
@@ -64,53 +58,13 @@ TestCase {
 
 	function test_current() {
 		staged.model = listModel.get(1)
-		var prev = QLibmacro.modifiers()
-
-		QLibmacro.setModifiers(0)
-		mouseClick(current)
-		expectModifier(0)
-
-		QLibmacro.setModifiers(7)
-		mouseClick(current)
-		expectModifier(7)
-
-		QLibmacro.setModifiers(prev)
 	}
 
 	function fiddleModel() {
-		staged.model.modifiers = 0
-		expectModifier(0)
-
-		staged.model.modifiers = 7
-		expectModifier(7)
-
-		staged.model.modifiers = -1
-		expectModifier(-1)
-
-		staged.model.triggerFlags = 0
-		expectTriggerFlags(0)
-
-		staged.model.triggerFlags = 7
-		expectTriggerFlags(7)
-
-		staged.model.triggerFlags = -1
-		expectTriggerFlags(-1)
-	}
-
-	function expectModifier(value) {
-		compare(modifiers.modifiers, value)
-		expectModel()
-	}
-
-	function expectTriggerFlags(value) {
-		compare(triggerFlags.flags, value)
-		expectModel()
 	}
 
 	function expectModel() {
 		if (staged.model) {
-			compare(staged.model.modifiers, modifiers.modifiers)
-			compare(staged.model.triggerFlags, triggerFlags.flags)
 		}
 	}
 

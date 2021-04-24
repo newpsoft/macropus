@@ -4,7 +4,6 @@ import QtQuick.Controls.Material 2.3
 import "../../../qml/controls/trigger"
 import "../../../qml/settings"
 import "../../../qml/views"
-import "../../../qml/functions.js" as Functions
 
 Column {
 	id: control

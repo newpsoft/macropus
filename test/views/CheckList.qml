@@ -4,7 +4,6 @@ import QtQuick.Controls.Material 2.3
 import "../../qml/controls/signal"
 import "../../qml/settings"
 import "../../qml/views"
-import "../../qml/functions.js" as Functions
 import "../../qml/list_util.js" as ListUtil
 
 Column {
@@ -49,6 +48,7 @@ Column {
 //	}
 
 	property ListModel model: ListModel {
+		// @disable-check M16
 		dynamicRoles: true
 		Component.onCompleted: {
 			for (var i = 0; i < 50; i++) {
@@ -62,7 +62,7 @@ Column {
 		text: qsTr("Select all")
 	}
 
-	DropList {
+	DropListForm {
 		id: dropList
 		model: view.model
 //		onSelectedChanged: {
@@ -73,7 +73,7 @@ Column {
 //			}
 //		}
 
-		contentItem: TextField {
+		contentComponent: TextField {
 			anchors.left: parent.left
 			anchors.right: parent.right
 			anchors.verticalCenter: parent.verticalCenter

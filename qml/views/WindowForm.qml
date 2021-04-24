@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -18,24 +18,12 @@
 
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Window 2.0
+import QtQuick.Window 2.2
 import "../settings"
 
 Window {
 	id: view
 	title: "Odo"
-	x: geometry.x
-	y: geometry.y
-	width: geometry.width
-	height: geometry.height
-	// Limitation, geometry will never be minimized or hidden
-	onVisibleChanged: visibility = geometry.visibility
-
-	/* Notify we use Libmacro */
-	Component.onCompleted: {
-		if (visible)
-			visibility = geometry.visibility
-	}
 
 	property Geometry geometry: Geometry {
 		category: "Window" + (title ? "." + title : "")

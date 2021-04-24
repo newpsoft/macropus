@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
-# Require Qt
+# Require Qt and C++
 set(MCR_NOEXTRAS OFF CACHE BOOL "Do not include extra functionality, or any C++." FORCE)
 set(MCR_NOQT OFF CACHE BOOL "Do not include any QT functionality." FORCE)
+
 # Defines LIBMACRO_TARGET
 add_subdirectory(libmacro)
 # Defines MCR_VER, MCR_VER_MAJ, MCR_VER_MIN, MCR_DEBUG, MCR_PLATFORM
@@ -10,7 +11,13 @@ include(libmacro/libmacro.cmake)
 # Defines GIT_EXECUTABLE, GIT_REVISION, GIT_BRANCH
 include(libmacro/git.cmake)
 
-project(Macropus VERSION ${MCR_VER}.${GIT_REVISION} LANGUAGES CXX)
+if (windows AND CMAKE_BUILD_TYPE MATCHES "^[Rr]el" OR CMAKE_BUILD_TYPE MATCHES "^[Mm]in")
+	option(BUILD_SIGNED "Sign an elevated executable." ON)
+else ()
+	option(BUILD_SIGNED "Sign an elevated executable." OFF)
+endif ()
+
+project(Macropus VERSION ${MCR_VER}.${GIT_REVISION} HOMEPAGE_URL "https://sites.google.com/view/newparadigmsoftware" LANGUAGES C CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(include)
@@ -24,7 +31,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5 COMPONENTS Core Quick QuickControls2 Widgets Qml Svg Test
+find_package(Qt5 COMPONENTS Core Quick Widgets Qml Svg Test
 	QuickTest REQUIRED)
 # TODO Thread optional with event loop
 find_package(Threads REQUIRED)
@@ -49,6 +56,14 @@ if (windows)
 			RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 		)
 	endif (TARGET tst_libmacro)
+	if (TARGET tst_intercept)
+		set_target_properties(tst_intercept
+			PROPERTIES
+			ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+			RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+		)
+	endif (TARGET tst_intercept)
 endif (windows)
 set(COMMON_DEFINES
 	-DVERSION=${MCR_VER}.${GIT_REVISION}
@@ -65,7 +80,7 @@ file(GLOB_RECURSE COMMON_HEADERS include/*.h)
 if (MCR_DEBUG)
 	file(GLOB_RECURSE QML_SOURCES LIST_DIRECTORIES false qml/*.qml qml/*.js qml/*qmldir)
 endif (MCR_DEBUG)
-set(COMMON_LIBRARIES mcr::Libmacro Qt5::Core Qt5::Quick Qt5::QuickControls2
+set(COMMON_LIBRARIES mcr::Libmacro Qt5::Core Qt5::Quick
 	Qt5::Qml Qt5::Svg)
 # Debug with live files, but we need icons and qtquickcontrols2.conf resources.
 if (MCR_DEBUG)
@@ -94,8 +109,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ${COMMON_DEFINES}
 	$<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${COMMON_LIBRARIES})
 add_dependencies(${PROJECT_NAME} mcr::Libmacro)
-# May need to debug without admin so only require it for packaging
-if (windows AND BUILD_PACKAGE)
+
+if (windows AND BUILD_SIGNED)
 	find_program(SignTool SignTool.exe)
 	# Able to sign with testing cert
 	if (NOT "${SignTool}" STREQUAL "")
@@ -108,7 +123,7 @@ if (windows AND BUILD_PACKAGE)
 			COMMENT "Signing ${PROJECT_NAME} executable with testing signature newpsoft-unnofficial.pfx..."
 			)
 	endif ()
-endif (windows AND BUILD_PACKAGE)
+endif (windows AND BUILD_SIGNED)
 
 file(GLOB_RECURSE QML_TEST_ALL test/*.qml test/*.js)
 # Qt testing libraries are only available for release builds
@@ -142,6 +157,11 @@ add_custom_target(MACROPUS_DISTFILES SOURCES
 	macropus.astylerc
 	style
 	todo.txt
+	.github/workflows/build.yml
+	)
+add_custom_target(TEST_ASSETS SOURCES
+	test/assets/serialized.mcr
+	test/assets/optimized.mcr
 	)
 
 # Windows package everything to base directory, otherwise lib is separate.

@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@ Column {
 			objectName: "load"
 			text: qsTr("Load")
 			onClicked: fileDialog.load()
+			ToolTip.delay: Vars.shortSecond
 			ToolTip.text: qsTr("Set string from the text in a file")
 			ButtonStyle {}
 		}
@@ -44,6 +45,7 @@ Column {
 				spinSec.value = 0
 				spinMsec.value = 100
 			}
+			ToolTip.delay: Vars.shortSecond
 			ToolTip.text: qsTr("Reset interval to a reasonable wait time")
 			ButtonStyle {}
 		}
@@ -55,7 +57,6 @@ Column {
 		anchors.left: parent.left
 		anchors.right: parent.right
 		placeholderText: qsTr("Text to type")
-		font: Util.fixedFont
 		Binding on text {
 			value: model && model.text
 		}
@@ -91,7 +92,7 @@ Column {
 				SpinBox {
 					id: spinMsec
 					objectName: "msec"
-					to: 1000
+					to: 999
 					editable: true
 					Binding on value {
 						value: control.model && control.model.msec
@@ -108,7 +109,7 @@ Column {
 				SpinBox {
 					id: spinSec
 					objectName: "sec"
-					to: 10000000
+					to: Vars.delaySecondsMaximum
 					editable: true
 					Binding on value {
 						value: control.model && control.model.sec

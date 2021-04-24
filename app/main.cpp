@@ -28,6 +28,7 @@
 #include "util.h"
 #include "qlibmacro.h"
 #include "qtrigger.h"
+#include "qclipboardproxy.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -56,6 +57,9 @@ int main(int argc, char *argv[])
 
 		QQmlApplicationEngine engine;
 		/* QML register types cannot be separated into a function */
+		qmlRegisterSingletonType<QClipboardProxy>(MACROPUS_PLUGIN_NAME, MACROPUS_PLUGIN_VERSION,
+									   "Clipboard",
+									   qmlClipboardProvider);
 		qmlRegisterSingletonType<FileUtil>(MACROPUS_PLUGIN_NAME, MACROPUS_PLUGIN_VERSION,
 									   "FileUtil",
 									   qmlFileUtilProvider);

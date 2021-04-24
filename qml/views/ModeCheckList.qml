@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -20,9 +20,6 @@ import QtQuick 2.10
 import QtQuick.Controls 2.3
 import QtQuick.Controls.Material 2.3
 import "../settings"
-import "../functions.js" as Functions
-import "../model.js" as Model
-import "../vars.js" as Vars
 import newpsoft.macropus 0.1
 
 Row {
@@ -44,12 +41,15 @@ Row {
 	CheckBox {
 		id: chkAll
 		text: qsTr("All")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Current mode \"All\" enables all macros without a mode filter.")
 		onCheckedChanged: {
 			if (checked) {
 				currentModeIndex = -1
 			} else if (model && (model.count || model.length)) {
-				currentModeIndex = 0
+				// Do not move to 0 if not currently "All"
+				if (currentModeIndex === -1)
+					currentModeIndex = 0
 			} else {
 				/* Cannot be no mode */
 				checked = true
@@ -60,8 +60,14 @@ Row {
 		}
 		DropArea {
 			anchors.fill: parent
-			keys: ["macros"]
+			keys: ["application/macro"]
 			onDropped: view.dropToAll(drop)
+			Rectangle {
+				anchors.fill: parent
+				color: Material.accent
+				radius: Style.tabRadius
+				visible: parent.containsDrag
+			}
 		}
 	}
 	/* Spacer */
@@ -85,7 +91,7 @@ Row {
 				}
 			}
 			Binding on text {
-				value: (model && model.text) || modelData
+				value: model && model.text
 			}
 			TabIndicator {
 				anchors.fill: parent
@@ -97,8 +103,14 @@ Row {
 			}
 			DropArea {
 				anchors.fill: parent
-				keys: ["macros"]
+				keys: ["application/macro"]
 				onDropped: view.dropTo(drop, index)
+				Rectangle {
+					anchors.fill: parent
+					color: Material.accent
+					radius: Style.tabRadius
+					visible: parent.containsDrag
+				}
 			}
 			ButtonStyle {
 				widthBinding.when: false

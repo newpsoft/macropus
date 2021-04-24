@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ Column {
 		objectName: "current"
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: qsTr("Current")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Set to current time")
 		onClicked: {
 			if (model) {
@@ -65,6 +66,7 @@ Column {
 		SpinBox {
 			id: spinSec
 			objectName: "sec"
+			editable: true
 			to: 60
 			Binding on value {
 				value: control.model && control.model.sec
@@ -81,6 +83,7 @@ Column {
 		SpinBox {
 			id: spinMin
 			objectName: "min"
+			editable: true
 			to: 59
 			Binding on value {
 				value: control.model && control.model.min
@@ -96,6 +99,7 @@ Column {
 		}
 		SpinBox {
 			id: spinHour
+			editable: true
 			objectName: "hour"
 			to: 23
 			Binding on value {
@@ -121,7 +125,7 @@ Column {
 
 				FlagChecks {
 					objectName: "days"
-					model: [qsTr("All")].concat(Model.weekdays())
+					model: [qsTr("All")].concat(Vars.weekdays)
 					Binding on flags {
 						value: control.model && control.model.days
 					}

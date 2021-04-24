@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -32,44 +32,46 @@ Column {
 		objectName: "recorder"
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: qsTr("Record")
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Record a button click.")
 		onClicked: recordWindow.show()
-		ButtonStyle {
-		}
+		ButtonStyle {}
 	}
 	ComboBox {
 		id: cmbKey
 		objectName: "key"
 		anchors.left: parent.left
 		anchors.right: parent.right
-		model: SignalFunctions.keyNames()
+		textRole: "name"
+		displayText: currentIndex === 0 ? SignalFunctions.keyName(LibmacroSettings.recordMacroKey) : model[currentIndex][textRole]
+		model: Vars.keyNameList
 		Binding on currentIndex {
-			value: control.model && control.model.key
+			value: Vars.findKeyIndex(control.model && control.model.key)
 		}
-		onCurrentIndexChanged: {
+		onActivated: {
 			if (control.model)
-				control.model.key = currentIndex
+				control.model.key = Vars.keyOf(index)
 		}
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Key code")
-		ComboBoxStyle {
-		}
+		ComboBoxStyle {}
 	}
 	ComboBox {
 		id: cmbApplyType
 		objectName: "applyType"
 		anchors.left: parent.left
 		anchors.right: parent.right
-		model: Model.keyPressTypes()
+		model: Vars.keyPressTypeLabels
 		Binding on currentIndex {
 			value: control.model && control.model.applyType
 		}
-		onCurrentIndexChanged: {
+		onActivated: {
 			if (control.model)
-				control.model.applyType = currentIndex
+				control.model.applyType = index
 		}
+		ToolTip.delay: Vars.shortSecond
 		ToolTip.text: qsTr("Up type, press or release")
-		ComboBoxStyle {
-		}
+		ComboBoxStyle {}
 	}
 	RecordOneWindow {
 		id: recordWindow
@@ -78,9 +80,14 @@ Column {
 		interceptISignal: "Key"
 		onTriggered: {
 			/* Always will be a key */
-			SignalPages.deserializeKey(intercept)
-			model.key = intercept.key
-			close()
+			SignalSerial.deserializeKey(intercept)
+			control.model.key = intercept.key
+			closeTimer.restart()
+		}
+		OneShot {
+			id: closeTimer
+
+			onTriggered: recordWindow.hide()
 		}
 	}
 }

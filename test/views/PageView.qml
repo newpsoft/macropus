@@ -5,7 +5,6 @@ import QtGraphicalEffects 1.0
 import "../../qml/controls/signal"
 import "../../qml/settings"
 import "../../qml/views"
-import "../../qml/functions.js" as Functions
 import "../../qml/list_util.js" as ListUtil
 
 Item {

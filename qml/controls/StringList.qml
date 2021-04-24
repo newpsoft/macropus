@@ -1,4 +1,4 @@
-/* Macropus - A Libmacro hotkey applicationw
+/* Macropus - A Libmacro hotkey application
   Copyright (C) 2013 Jonathan Pelletier, New Paradigm Software
 
   This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ ActionList {
 	property string title: qsTr("Edit string list")
 
 	fnNew: function () {
-		return new Model.IsString();
+		return new Model.TextObject();
 	}
 	delegate: Flow {
 		width: parent.width - Style.spacing * 2
@@ -37,7 +37,6 @@ ActionList {
 			id: editText
 			width: parent.width
 //			Keys.onPressed: control.jsonModel.handleKeys(event)
-			font: Util.fixedFont
 			onTextChanged: if (text !== model.text)
 							   model.text = text
 			Binding on text {
@@ -58,6 +57,7 @@ ActionList {
 						}
 						fileDialog.load()
 					}
+					ToolTip.delay: Vars.shortSecond
 					ToolTip.text: qsTr("Set string from the text in a file")
 				}
 			}

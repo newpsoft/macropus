@@ -183,15 +183,15 @@ ApplicationWindowForm {
 
 	Connections {
 		target: Util
-		function onError() {
-			error()
+		function onError(msg) {
+			control.error(msg)
 		}
 	}
 
 	Connections {
 		target: QLibmacro
-		function onError() {
-			error()
+		function onError(msg) {
+			control.error(msg)
 		}
 	}
 

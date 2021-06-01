@@ -17,7 +17,6 @@
 */
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import "../controls/signal"
 import "../settings"
 import newpsoft.macropus 0.1

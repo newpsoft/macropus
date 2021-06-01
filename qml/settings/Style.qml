@@ -38,6 +38,14 @@ QtObject {
 	// Magic spacers = 3 tiles / page
 	property real tileWidth: (pageWidth - spacing * 2) / 3
 	property real pageWidth: buttonWidth * 20
+	property var platform: QtObject {
+		property string background: "#080808"
+		property string foreground: "#f8f8f8"
+		property string primary: "#f6310a"
+		property string accent: "#ffb1a1"
+		property int elevation: 0
+		property bool systemFlag: false
+	}
 
 	property Binding bindFontSize: Binding {
 		target: Util
@@ -53,6 +61,7 @@ QtObject {
 
 	property Loader platformLoader: Loader {
 		source: Qt.resolvedUrl("PlatformStyle.qml")
+		onLoaded: platform = item
 	}
 
 	property Settings settings: Settings {

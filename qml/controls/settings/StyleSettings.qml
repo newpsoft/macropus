@@ -28,7 +28,7 @@ ScrollView {
 	property color editColor: Material.background
 	onEditColorChanged: applyColorTimer.restart()
 	property string styleColorName: "background"
-	onStyleColorNameChanged: editColor = Style[styleColorName]
+	onStyleColorNameChanged: editColor = Style.platform[styleColorName]
 	contentWidth: width
 
 	Column {
@@ -178,7 +178,7 @@ ScrollView {
 						OneShot {
 							id: tbg
 
-							onTriggered: Material.background = parent.text
+							onTriggered: Style.platform.background = parent.text
 						}
 					}
 					Label {
@@ -191,7 +191,7 @@ ScrollView {
 						OneShot {
 							id: tfg
 
-							onTriggered: Material.foreground = parent.text
+							onTriggered: Style.platform.foreground = parent.text
 						}
 					}
 					Label {
@@ -204,7 +204,7 @@ ScrollView {
 						OneShot {
 							id: tPr
 
-							onTriggered: Material.primary = parent.text
+							onTriggered: Style.platform.primary = parent.text
 						}
 					}
 					Label {
@@ -217,7 +217,7 @@ ScrollView {
 						OneShot {
 							id: tAcc
 
-							onTriggered: Material.accent = parent.text
+							onTriggered: Style.platform.accent = parent.text
 						}
 					}
 					Item {
@@ -427,6 +427,6 @@ ScrollView {
 	OneShot {
 		id: applyColorTimer
 
-		onTriggered: Style[styleColorName] = editColor
+		onTriggered: Style.platform[styleColorName] = editColor
 	}
 }

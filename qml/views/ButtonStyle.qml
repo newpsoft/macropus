@@ -17,7 +17,6 @@
 */
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import "../settings"
 import "../functions.js" as Functions
 
@@ -25,7 +24,7 @@ Item {
 	width: Style.buttonWidth
 
 	property alias widthBinding: widthBinding
-	property color buttonColor: Material.primary
+	property color buttonColor: Style.primary
 	property int display: Button.TextUnderIcon
 	// Javascript function, button sizes should not change.
 	property int radius: Math.min(parent.width,

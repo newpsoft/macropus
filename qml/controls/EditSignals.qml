@@ -17,7 +17,6 @@
 */
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import "../settings"
 import "../views"
 import "../extension.js" as Extension
@@ -69,7 +68,7 @@ Page {
 		Rectangle {
 			anchors.fill: parent
 			clip: true
-			color: Material.background
+			color: Style.background
 			visible: Style.opacity === 1.0
 		}
 

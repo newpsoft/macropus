@@ -17,7 +17,6 @@
 */
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import QtQuick.Window 2.2
 import "../views"
 import "../settings"
@@ -37,7 +36,7 @@ ApplicationWindowForm {
 	property bool onTopMode: WindowSettings.toolMode
 							 || WindowSettings.alwaysOnTop
 	property bool hasTransparency: WindowSettings.toolMode
-								   || Util.isTranslucent(Material.background)
+								   || Util.isTranslucent(Style.background)
 								   || Style.opacity < 1.0
 	/* Always on top acts as frameless ToolTip.  Stay on top may require X11BypassWindowManagerHint. */
 	property int onTopFlags: onTopMode ? overlayFlags : 0
@@ -183,15 +182,15 @@ ApplicationWindowForm {
 
 	Connections {
 		target: Util
-		function onError() {
-			error()
+		function onError(msg) {
+			control.error(msg)
 		}
 	}
 
 	Connections {
 		target: QLibmacro
-		function onError() {
-			error()
+		function onError(msg) {
+			control.error(msg)
 		}
 	}
 

@@ -17,14 +17,13 @@
 */
 
 import QtQuick 2.10
-import QtQuick.Controls.Material 2.3
 import "../settings"
 import "../functions.js" as Functions
 
 Item {
 	implicitHeight: childrenRect.height
 
-	property color borderColor: Material.primary
+	property color borderColor: Style.primary
 	// Javascript function, button sizes should not change.
 	property int radius: Math.min(parent.width,
 								  parent.height) * Style.buttonRadius

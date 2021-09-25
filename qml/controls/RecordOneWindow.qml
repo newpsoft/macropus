@@ -18,7 +18,6 @@
 
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import QtQuick.Window 2.2
 import "../settings"
 import "../views"
@@ -28,7 +27,7 @@ ApplicationWindow {
 	id: control
 	title: qsTr("Recording")
 	visible: false
-	color: Material.background
+	color: Style.background
 	flags: Qt.Dialog
 	width: Style.tileWidth
 	height: width * Vars.lGolden

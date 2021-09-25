@@ -17,12 +17,11 @@
 */
 
 import QtQuick 2.10
-import QtQuick.Controls.Material 2.3
 import "../settings"
 import "../functions.js" as Functions
 
 Item {
-	property color buttonColor: Material.primary
+	property color buttonColor: Style.primary
 	// Javascript function, button sizes should not change.
 	property int radius: Style.tabRadius
 	// Assumes the background item does not change.

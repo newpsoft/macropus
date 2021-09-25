@@ -17,26 +17,25 @@
 */
 
 import QtQuick 2.10
-import QtQuick.Controls.Material 2.3
 import "../settings"
 
 Item {
 	Rectangle {
 		anchors.bottom: parent.bottom
-		color: Material.accent
+		color: Style.accent
 		width: Style.tabRadius
 		height: parent.height * Vars.lGolden
 	}
 	Rectangle {
 		anchors.bottom: parent.bottom
-		color: Material.accent
+		color: Style.accent
 		width: parent.width
 		height: Style.tabRadius
 	}
 	Rectangle {
 		anchors.bottom: parent.bottom
 		anchors.right: parent.right
-		color: Material.accent
+		color: Style.accent
 		width: Style.tabRadius
 		height: parent.height * Vars.lGolden
 	}

@@ -17,13 +17,12 @@
 */
 
 import QtQuick 2.10
-import QtQuick.Controls.Material 2.3
 import "../settings"
 
 Rectangle {
 	id: view
 	width: Style.buttonWidth
-	color: selected ? Material.accent : Material.primary
+	color: selected ? Style.accent : Style.primary
 	radius: Style.tabRadius
 
 	property bool selected: false
@@ -40,33 +39,33 @@ Rectangle {
 			width: view.gWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.foreground
+			color: Style.foreground
 		}
 		Rectangle {
 			anchors.horizontalCenter: parent.horizontalCenter
 			width: view.lgWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.foreground
+			color: Style.foreground
 		}
 		Rectangle {
 			width: view.gWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.foreground
+			color: Style.foreground
 		}
 		Rectangle {
 			anchors.horizontalCenter: parent.horizontalCenter
 			width: view.lgWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.foreground
+			color: Style.foreground
 		}
 		Rectangle {
 			width: view.gWidth
 			height: view.lineHeight
 			radius: view.lineRadius
-			color: Material.foreground
+			color: Style.foreground
 		}
 	}
 }

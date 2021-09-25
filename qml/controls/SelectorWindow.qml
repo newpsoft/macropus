@@ -18,7 +18,6 @@
 
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import QtQuick.Window 2.2
 import Qt.labs.settings 1.0
 import "../settings"
@@ -29,7 +28,7 @@ import newpsoft.macropus 0.1
 WindowForm {
 	id: control
 	title: qsTr("InterruptSelector")
-	color: Material.background
+	color: Style.background
 
 	property int currentModeIndex
 	property string target: ""
@@ -77,12 +76,12 @@ WindowForm {
 								anchors.fill: parent
 								hoverEnabled: WindowSettings.enableToolTips
 								onEntered: {
-									bg.color = Material.foreground
-									parent.color = Material.background
+									bg.color = Style.foreground
+									parent.color = Style.background
 								}
 								onExited: {
-									bg.color = Material.background
-									parent.color = Material.foreground
+									bg.color = Style.background
+									parent.color = Style.foreground
 								}
 								onClicked: {
 									control.target = model.name

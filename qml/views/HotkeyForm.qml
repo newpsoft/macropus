@@ -18,7 +18,6 @@
 
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import "../settings"
 
 Frame {
@@ -43,7 +42,7 @@ Frame {
 					background: Rectangle {
 						anchors.fill: parent
 						opacity: index % 2 ? Vars.lGolden : Vars.golden
-						color: Material.background
+						color: Style.background
 					}
 					anchors.left: parent.left
 					anchors.right: parent.right

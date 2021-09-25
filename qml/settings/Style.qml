@@ -31,13 +31,21 @@ QtObject {
 	property alias buttonRadius: settings.buttonRadius
 	property alias opacity: settings.opacity
 
-	// TODO Move to globals?
+	// TODO Move to vars?
 	property int h1: fontSize * 1.68
 	property int h2: fontSize * 1.32
 	property int tabRadius: spacing / 2
 	// Magic spacers = 3 tiles / page
 	property real tileWidth: (pageWidth - spacing * 2) / 3
 	property real pageWidth: buttonWidth * 20
+
+	// Modifying the theme does not work. Implementation has been removed.
+	property string background: "#303030"
+	property string foreground: "#f8f8f8"
+	property string primary: "#f6310a"
+	property string accent: "#ffb1a1"
+	property int elevation: 0
+	property bool systemFlag: false
 
 	property Binding bindFontSize: Binding {
 		target: Util
@@ -49,10 +57,6 @@ QtObject {
 		target: Util
 		property: "iconTheme"
 		value: iconTheme
-	}
-
-	property Loader platformLoader: Loader {
-		source: Qt.resolvedUrl("PlatformStyle.qml")
 	}
 
 	property Settings settings: Settings {

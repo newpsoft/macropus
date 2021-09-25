@@ -18,7 +18,6 @@
 
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import "../settings"
 import newpsoft.macropus 0.1
 
@@ -64,7 +63,7 @@ Row {
 			onDropped: view.dropToAll(drop)
 			Rectangle {
 				anchors.fill: parent
-				color: Material.accent
+				color: Style.accent
 				radius: Style.tabRadius
 				visible: parent.containsDrag
 			}
@@ -107,7 +106,7 @@ Row {
 				onDropped: view.dropTo(drop, index)
 				Rectangle {
 					anchors.fill: parent
-					color: Material.accent
+					color: Style.accent
 					radius: Style.tabRadius
 					visible: parent.containsDrag
 				}
@@ -115,7 +114,7 @@ Row {
 			ButtonStyle {
 				widthBinding.when: false
 				Binding on buttonColor {
-					value: btnModeMe.btnCurrentMode ? Material.background : Material.primary
+					value: btnModeMe.btnCurrentMode ? Style.background : Style.primary
 				}
 			}
 		}

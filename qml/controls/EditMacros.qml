@@ -17,7 +17,6 @@
 */
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import Qt.labs.settings 1.0
 import QtGraphicalEffects 1.0
 import "../settings"
@@ -85,7 +84,7 @@ Page {
 		Rectangle {
 			anchors.fill: headerContent
 			clip: true
-			color: Material.background
+			color: Style.background
 			visible: Style.opacity === 1.0
 		}
 

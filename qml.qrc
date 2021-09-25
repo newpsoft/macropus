@@ -396,7 +396,6 @@
         <file>qml/settings/Files.qml</file>
         <file>qml/settings/Geometry.qml</file>
         <file>qml/settings/LibmacroSettings.qml</file>
-        <file>qml/settings/PlatformStyle.qml</file>
         <file>qml/settings/qmldir</file>
         <file>qml/settings/Style.qml</file>
         <file>qml/settings/WindowSettings.qml</file>

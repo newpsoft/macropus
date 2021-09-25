@@ -18,7 +18,6 @@
 
 import QtQuick 2.10
 import QtQuick.Controls 2.3
-import QtQuick.Controls.Material 2.3
 import "../settings"
 
 Row {
@@ -72,7 +71,7 @@ Row {
 		anchors.verticalCenter: parent.verticalCenter
 		width: Style.tabRadius
 		height: parent.height - Style.tabRadius
-		color: Material.background
+		color: Style.background
 	}
 	ToolButton {
 		id: btnCut

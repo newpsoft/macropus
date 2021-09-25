@@ -17,7 +17,6 @@
 */
 
 import QtQuick 2.10
-import QtQuick.Controls.Material 2.3
 import "../settings"
 
 Item {
@@ -52,7 +51,7 @@ Item {
 			anchors.topMargin: view.tileModeFlag ? 0 : -Style.spacing
 			anchors.leftMargin: view.tileModeFlag ? -Style.spacing : 0
 			height: Style.spacing
-			color: Material.accent
+			color: Style.accent
 			radius: Style.tabRadius
 			visible: parent.containsDrag
 		}
@@ -72,7 +71,7 @@ Item {
 			anchors.bottomMargin: view.tileModeFlag ? 0 : -Style.spacing
 			anchors.rightMargin: view.tileModeFlag ? -Style.spacing : 0
 			height: Style.spacing
-			color: Material.accent
+			color: Style.accent
 			radius: Style.tabRadius
 			visible: parent.containsDrag
 		}

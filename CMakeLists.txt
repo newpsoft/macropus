@@ -117,7 +117,7 @@ if (windows AND BUILD_SIGNED)
 		target_link_options(${PROJECT_NAME} PRIVATE "/MANIFESTUAC:level=\"requireAdministrator\" uiAccess=\"false\"")
 		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 			COMMAND "${CMAKE_COMMAND}" -E
-				env "${SignTool}" sign
+				env "${SignTool}" sign /fd SHA256
 					/f "${CMAKE_CURRENT_SOURCE_DIR}/newpsoft-unnofficial.pfx"
 					\"$<TARGET_FILE:${PROJECT_NAME}>\"
 			COMMENT "Signing ${PROJECT_NAME} executable with testing signature newpsoft-unnofficial.pfx..."
